@@ -76,7 +76,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'SupplyGrid',
+        'NAME': 'LogisticsPortal',
         'USER': 'postgres',
         'PASSWORD': 'Pancho2025',
         'HOST': 'localhost',  # Cambia si usas un servidor remoto
