@@ -1,0 +1,34 @@
+# Virtual environment directories for Python
+server/env/
+server/venv/
+
+# Django database files (if using SQLite)
+server/db.sqlite3
+
+# Django cache files (all levels)
+server/**/*.pyc
+server/**/__pycache__/
+
+# Django migration files
+#server/*/migrations/
+#!server/*/migrations/__init__.py # Keep __init__.py so Django can detect the module
+
+# IDE configuration files (such as VS Code, PyCharm)
+.vscode/
+.idea/
+
+# Node.js dependency files (React)
+client/node_modules/
+client/.env
+client/.next/
+client/build/
+client/dist/
+
+# Temporary operating system files
+.DS_Store
+Thumbs.db
+
+# Other configuration files you do not wish to upload
+*.log
+*.bak
+*.swp
