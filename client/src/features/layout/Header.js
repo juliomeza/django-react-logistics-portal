@@ -32,6 +32,7 @@ const Header = () => {
   const getCurrentTab = () => {
     if (location.pathname === '/dashboard') return 0;
     if (location.pathname.startsWith('/create-order') || location.pathname.startsWith('/edit-order')) return 1;
+    if (location.pathname === '/reports') return 2;
     if (location.pathname.startsWith('/order/')) return false; // No seleccionamos ninguna pestaña para rutas de vista
     return 0; // Por defecto, Dashboard
   };
@@ -55,6 +56,7 @@ const Header = () => {
   const handleTabChange = (event, newValue) => {
     if (newValue === 0) navigate('/dashboard');
     else if (newValue === 1) navigate('/create-order');
+    else if (newValue === 2) navigate('/reports');
   };
 
   return (
@@ -74,6 +76,7 @@ const Header = () => {
           >
             <Tab label="Dashboard" />
             <Tab label="Create Order" />
+            <Tab label="Reports" />
           </Tabs>
 
           <IconButton color="inherit" onClick={handleMenuOpen}>

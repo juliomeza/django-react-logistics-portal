@@ -4,6 +4,7 @@ import Login from './features/auth/Login';
 import Dashboard from './features/dashboard/pages/Dashboard';
 import MultiStepCreateOrder from './features/orders/pages/MultiStepCreateOrder';
 import OrderView from './features/orders/pages/OrderView';
+import Reports from './features/reports/pages/Reports';
 import ProtectedRoute from './features/layout/ProtectedRoute';
 
 const App = () => {
@@ -17,6 +18,7 @@ const App = () => {
           <Route path="/create-order" element={<ProtectedRoute><MultiStepCreateOrder /></ProtectedRoute>} />
           <Route path="/edit-order/:orderId" element={<ProtectedRoute><MultiStepCreateOrder /></ProtectedRoute>} />
           <Route path="/order/:orderId" element={<ProtectedRoute><OrderView /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
         </Routes>
       </AuthProvider>
     </Router>
