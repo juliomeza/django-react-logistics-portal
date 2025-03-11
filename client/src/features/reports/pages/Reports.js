@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -20,24 +20,59 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  useTheme
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import apiProtected from '../../../services/api/secureApi';
 
 const Reports = () => {
+  // Theme
+  const theme = useTheme();
+  
+  // Refs
+  const tableContainerRef = useRef(null);
+  
   // State
   const [data, setData] = useState([]);
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(50); // Default rows per page
   const [searchTerm, setSearchTerm] = useState('');
   const [projectInfo, setProjectInfo] = useState(null);
   const [availableReports, setAvailableReports] = useState([]);
   const [selectedReport, setSelectedReport] = useState('');
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [showLeftShadow, setShowLeftShadow] = useState(false);
+  const [showRightShadow, setShowRightShadow] = useState(false);
+
+  // Handle horizontal scroll
+  const handleScroll = () => {
+    if (tableContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
+      setScrollPosition(scrollLeft);
+      setShowLeftShadow(scrollLeft > 5);
+      setShowRightShadow(scrollLeft < scrollWidth - clientWidth - 5);
+    }
+  };
+
+  // Scroll left/right by one visible width
+  const scrollLeft = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
 
   // Fetch available reports
   const fetchAvailableReports = async () => {
@@ -93,6 +128,19 @@ const Reports = () => {
       fetchReportData(selectedReport);
     }
   }, [selectedReport]);
+
+  // Check for scroll shadows when data changes
+  useEffect(() => {
+    // Reset scroll position when data changes
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollLeft = 0;
+    }
+    
+    // Check if shadows should be shown
+    setTimeout(() => {
+      handleScroll();
+    }, 100);
+  }, [data]);
 
   // Handlers
   const handleChangePage = (event, newPage) => {
@@ -215,42 +263,125 @@ const Reports = () => {
         ) : (
           <>
             {/* Results count */}
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              {selectedReportName}: Found {filteredData.length} results
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="body2">
+                {selectedReportName}: Found {filteredData.length} results
+              </Typography>
+              
+              {/* Scroll controls */}
+              {(showLeftShadow || showRightShadow) && (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <IconButton 
+                    size="small" 
+                    onClick={scrollLeft} 
+                    disabled={!showLeftShadow}
+                    sx={{ opacity: showLeftShadow ? 1 : 0.3 }}
+                  >
+                    <KeyboardArrowLeftIcon />
+                  </IconButton>
+                  <IconButton 
+                    size="small" 
+                    onClick={scrollRight} 
+                    disabled={!showRightShadow}
+                    sx={{ opacity: showRightShadow ? 1 : 0.3 }}
+                  >
+                    <KeyboardArrowRightIcon />
+                  </IconButton>
+                </Box>
+              )}
+            </Box>
 
-            {/* Data table */}
-            <TableContainer component={Paper} variant="outlined">
-              <Table sx={{ minWidth: 650 }} aria-label="report results table">
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: (theme) => theme.palette.action.hover }}>
-                    {columns.map((column) => (
-                      <TableCell key={column}><strong>{column}</strong></TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {paginatedData.map((row, rowIndex) => (
-                    <TableRow key={rowIndex} hover>
+            {/* Data table with sticky header */}
+            <Box 
+              sx={{ 
+                position: 'relative',
+                '&::before': showLeftShadow ? {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '20px',
+                  height: '100%',
+                  background: `linear-gradient(to right, ${theme.palette.background.paper}, transparent)`,
+                  zIndex: 2,
+                  pointerEvents: 'none'
+                } : {},
+                '&::after': showRightShadow ? {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '20px',
+                  height: '100%',
+                  background: `linear-gradient(to left, ${theme.palette.background.paper}, transparent)`,
+                  zIndex: 2,
+                  pointerEvents: 'none'
+                } : {}
+              }}
+            >
+              <TableContainer 
+                component={Paper} 
+                variant="outlined" 
+                ref={tableContainerRef}
+                onScroll={handleScroll}
+                sx={{ 
+                  maxHeight: '60vh',
+                  overflow: 'auto',
+                  '& .MuiTableHead-root': {
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 1,
+                    backgroundColor: theme.palette.background.paper,
+                  }
+                }}
+              >
+                <Table stickyHeader aria-label="report results table">
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: (theme) => theme.palette.action.hover }}>
                       {columns.map((column) => (
-                        <TableCell key={column}>{row[column]}</TableCell>
+                        <TableCell 
+                          key={column}
+                          sx={{
+                            fontWeight: 'bold',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: (theme) => theme.palette.action.hover,
+                          }}
+                        >
+                          {column}
+                        </TableCell>
                       ))}
                     </TableRow>
-                  ))}
-                  {paginatedData.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={columns.length} align="center">
-                        No results found matching your search.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {paginatedData.map((row, rowIndex) => (
+                      <TableRow key={rowIndex} hover>
+                        {columns.map((column) => (
+                          <TableCell 
+                            key={column}
+                            sx={{ 
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {row[column]}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                    {paginatedData.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} align="center">
+                          No results found matching your search.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
 
             {/* Pagination */}
             <TablePagination
-              rowsPerPageOptions={[5, 10, 25, 50]}
+              rowsPerPageOptions={[25, 50, 100]} // Rows per page options
               component="div"
               count={filteredData.length}
               rowsPerPage={rowsPerPage}
