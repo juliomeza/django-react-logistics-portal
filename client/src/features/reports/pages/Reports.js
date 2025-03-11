@@ -31,10 +31,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import apiProtected from '../../../services/api/secureApi';
 
-// Simula los componentes de TreeView (esto deberías reemplazarlo con la importación real)
-// import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
-// import { TreeItem } from '@mui/x-tree-view/TreeItem';
-
 // Componente personalizado para el selector de reportes con TreeView
 const ReportSelector = ({ 
   availableReports, 
@@ -131,7 +127,6 @@ const ReportSelector = ({
       >
         <Box sx={{ p: 1 }}>
           {/* Simulamos un TreeView con componentes estándar de MUI */}
-          {/* Esto debería reemplazarse con SimpleTreeView y TreeItem cuando instales el paquete */}
           <Box sx={{ width: '100%' }}>
             {Array.from(new Set(availableReports.map(report => report.category)))
               .sort()
@@ -187,43 +182,6 @@ const ReportSelector = ({
                 </Box>
               ))}
           </Box>
-          
-          {/* Cuando tengas el paquete @mui/x-tree-view instalado, reemplaza el código anterior con: */}
-          {/* 
-          <SimpleTreeView
-            aria-label="report selector"
-            defaultExpandedItems={[]}
-            sx={{ width: '100%' }}
-          >
-            {Array.from(new Set(availableReports.map(report => report.category)))
-              .sort()
-              .map(category => (
-                <TreeItem
-                  key={category}
-                  itemId={`category-${category}`}
-                  label={category}
-                  sx={{
-                    '& .MuiTreeItem-content': {
-                      fontWeight: 'bold',
-                      textTransform: 'capitalize'
-                    }
-                  }}
-                >
-                  {availableReports
-                    .filter(report => report.category === category)
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map(report => (
-                      <TreeItem
-                        key={report.id}
-                        itemId={report.id.toString()}
-                        label={report.name}
-                        onClick={() => handleReportSelect(report.id)}
-                      />
-                    ))}
-                </TreeItem>
-              ))}
-          </SimpleTreeView>
-          */}
         </Box>
       </Popover>
     </FormControl>
@@ -385,29 +343,42 @@ const Reports = () => {
   )?.name || 'Report';
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 6, mb: 4 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
-        {/* Controls section - all in one row */}
-        <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
-          {/* Report selection - TreeView implementation */}
-          <Grid item xs={12} md={5} lg={5}>
-            <ReportSelector 
-              availableReports={availableReports}
-              selectedReport={selectedReport}
-              onReportChange={handleReportChange}
-              isLoading={loading && data.length === 0}
-            />
-          </Grid>
-          
-          {/* Search field */}
-          <Grid item xs={12} md={5} lg={5}>
+    <>
+      {/* Second header with controls - styled like DashboardFilters */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: '64px', // Altura predeterminada del AppBar/Toolbar
+          left: 0,
+          right: 0,
+          zIndex: 1100,
+          backgroundColor: 'background.paper',
+          boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
+          borderBottom: 1,
+          borderColor: 'divider',
+          py: 2,
+        }}
+      >
+        <Container maxWidth="lg">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Report selector - left side */}
+            <Box sx={{ width: '30%' }}>
+              <ReportSelector 
+                availableReports={availableReports}
+                selectedReport={selectedReport}
+                onReportChange={handleReportChange}
+                isLoading={loading && data.length === 0}
+              />
+            </Box>
+            
+            {/* Search field - center/right */}
             <TextField
-              fullWidth
-              variant="outlined"
               placeholder="Search in results"
+              variant="outlined"
+              size="small"
               value={searchTerm}
               onChange={handleSearchChange}
-              size="small"
+              sx={{ minWidth: 400 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -416,169 +387,174 @@ const Reports = () => {
                 ),
               }}
             />
-          </Grid>
-          
-          {/* Project code chip and refresh button */}
-          <Grid item xs={12} md={2} lg={2} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-            {projectInfo && projectInfo.lookup_code && (
-              <Chip 
-                label={`Code: ${projectInfo.lookup_code}`}
-                color="primary"
-                variant="outlined"
-                size="small"
-              />
-            )}
-            <IconButton onClick={handleRefresh} color="primary" aria-label="refresh" size="small">
-              <RefreshIcon />
-            </IconButton>
-          </Grid>
-        </Grid>
-
-        {/* Error message */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Loading indicator */}
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <>
-            {/* Results count and scroll controls */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Typography variant="body2">
-                {selectedReportName}: Found {filteredData.length} results
-              </Typography>
-              
-              {/* Scroll controls */}
-              {(showLeftShadow || showRightShadow) && (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton 
-                    size="small" 
-                    onClick={scrollLeft} 
-                    disabled={!showLeftShadow}
-                    sx={{ opacity: showLeftShadow ? 1 : 0.3 }}
-                  >
-                    <KeyboardArrowLeftIcon />
-                  </IconButton>
-                  <IconButton 
-                    size="small" 
-                    onClick={scrollRight} 
-                    disabled={!showRightShadow}
-                    sx={{ opacity: showRightShadow ? 1 : 0.3 }}
-                  >
-                    <KeyboardArrowRightIcon />
-                  </IconButton>
-                </Box>
+            
+            {/* Project code and refresh - right side */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {projectInfo && projectInfo.lookup_code && (
+                <Chip 
+                  label={`Code: ${projectInfo.lookup_code}`}
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                />
               )}
+              <IconButton onClick={handleRefresh} color="primary" aria-label="refresh" size="small">
+                <RefreshIcon />
+              </IconButton>
             </Box>
+          </Box>
+        </Container>
+      </Box>
 
-            {/* Data table with sticky header */}
-            <Box 
-              sx={{ 
-                position: 'relative',
-                '&::before': showLeftShadow ? {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '20px',
-                  height: '100%',
-                  background: `linear-gradient(to right, ${theme.palette.background.paper}, transparent)`,
-                  zIndex: 2,
-                  pointerEvents: 'none'
-                } : {},
-                '&::after': showRightShadow ? {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '20px',
-                  height: '100%',
-                  background: `linear-gradient(to left, ${theme.palette.background.paper}, transparent)`,
-                  zIndex: 2,
-                  pointerEvents: 'none'
-                } : {}
-              }}
-            >
-              <TableContainer 
-                component={Paper} 
-                variant="outlined" 
-                ref={tableContainerRef}
-                onScroll={handleScroll}
+      {/* Main content - adjusted with top margin to account for fixed header */}
+      <Container maxWidth="lg" sx={{ mt: 16, mb: 4 }}>
+        <Paper elevation={3} sx={{ p: 3 }}>
+          {/* Error message */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {/* Loading indicator */}
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <>
+              {/* Results count and scroll controls */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="body2">
+                  {selectedReportName}: Found {filteredData.length} results
+                </Typography>
+                
+                {/* Scroll controls */}
+                {(showLeftShadow || showRightShadow) && (
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton 
+                      size="small" 
+                      onClick={scrollLeft} 
+                      disabled={!showLeftShadow}
+                      sx={{ opacity: showLeftShadow ? 1 : 0.3 }}
+                    >
+                      <KeyboardArrowLeftIcon />
+                    </IconButton>
+                    <IconButton 
+                      size="small" 
+                      onClick={scrollRight} 
+                      disabled={!showRightShadow}
+                      sx={{ opacity: showRightShadow ? 1 : 0.3 }}
+                    >
+                      <KeyboardArrowRightIcon />
+                    </IconButton>
+                  </Box>
+                )}
+              </Box>
+
+              {/* Data table with sticky header */}
+              <Box 
                 sx={{ 
-                  maxHeight: '65vh', // Slightly larger to use more vertical space
-                  overflow: 'auto',
-                  '& .MuiTableHead-root': {
-                    position: 'sticky',
+                  position: 'relative',
+                  '&::before': showLeftShadow ? {
+                    content: '""',
+                    position: 'absolute',
                     top: 0,
-                    zIndex: 1,
-                    backgroundColor: theme.palette.background.paper,
-                  }
+                    left: 0,
+                    width: '20px',
+                    height: '100%',
+                    background: `linear-gradient(to right, ${theme.palette.background.paper}, transparent)`,
+                    zIndex: 2,
+                    pointerEvents: 'none'
+                  } : {},
+                  '&::after': showRightShadow ? {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    width: '20px',
+                    height: '100%',
+                    background: `linear-gradient(to left, ${theme.palette.background.paper}, transparent)`,
+                    zIndex: 2,
+                    pointerEvents: 'none'
+                  } : {}
                 }}
               >
-                <Table stickyHeader aria-label="report results table">
-                  <TableHead>
-                    <TableRow sx={{ backgroundColor: (theme) => theme.palette.action.hover }}>
-                      {columns.map((column) => (
-                        <TableCell 
-                          key={column}
-                          sx={{
-                            fontWeight: 'bold',
-                            whiteSpace: 'nowrap',
-                            backgroundColor: (theme) => theme.palette.action.hover,
-                          }}
-                        >
-                          {column}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {paginatedData.map((row, rowIndex) => (
-                      <TableRow key={rowIndex} hover>
+                <TableContainer 
+                  component={Paper} 
+                  variant="outlined" 
+                  ref={tableContainerRef}
+                  onScroll={handleScroll}
+                  sx={{ 
+                    maxHeight: '65vh', // Slightly larger to use more vertical space
+                    overflow: 'auto',
+                    '& .MuiTableHead-root': {
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 1,
+                      backgroundColor: theme.palette.background.paper,
+                    }
+                  }}
+                >
+                  <Table stickyHeader aria-label="report results table">
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: (theme) => theme.palette.action.hover }}>
                         {columns.map((column) => (
                           <TableCell 
                             key={column}
-                            sx={{ 
-                              whiteSpace: 'nowrap'
+                            sx={{
+                              fontWeight: 'bold',
+                              whiteSpace: 'nowrap',
+                              backgroundColor: (theme) => theme.palette.action.hover,
                             }}
                           >
-                            {row[column]}
+                            {column}
                           </TableCell>
                         ))}
                       </TableRow>
-                    ))}
-                    {paginatedData.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={columns.length} align="center">
-                          No results found matching your search.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedData.map((row, rowIndex) => (
+                        <TableRow key={rowIndex} hover>
+                          {columns.map((column) => (
+                            <TableCell 
+                              key={column}
+                              sx={{ 
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {row[column]}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                      {paginatedData.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={columns.length} align="center">
+                            No results found matching your search.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
 
-            {/* Pagination */}
-            <TablePagination
-              rowsPerPageOptions={[25, 50, 100]} // Rows per page options
-              component="div"
-              count={filteredData.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-          </>
-        )}
-      </Paper>
-    </Container>
+              {/* Pagination */}
+              <TablePagination
+                rowsPerPageOptions={[25, 50, 100]} // Rows per page options
+                component="div"
+                count={filteredData.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+            </>
+          )}
+        </Paper>
+      </Container>
+    </>
   );
 };
 
