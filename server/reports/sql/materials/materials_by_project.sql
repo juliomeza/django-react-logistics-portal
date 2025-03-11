@@ -1,7 +1,7 @@
 SELECT 
-    m.id, 
-    m.projectId, 
-    m.lookupCode
+    m.id 'Material ID', 
+    m.projectId 'Project ID', 
+    m.lookupCode 'Material Code'
 FROM 
     datex_footprint.Materials m
 JOIN 

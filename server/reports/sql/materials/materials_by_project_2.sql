@@ -1,7 +1,7 @@
 SELECT 
-    p.name, 
-	m.lookupCode, 
-    m.description
+    p.name Project, 
+	m.lookupCode Material, 
+    m.description 'Material Description'
 FROM 
     datex_footprint.Materials m
 JOIN 
