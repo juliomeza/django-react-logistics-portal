@@ -33,13 +33,8 @@ const MaterialSelectionStep = ({
   // Create inventory options for autocomplete
   const inventoryOptions = createInventoryOptions(inventories, materials);
 
-  // Filter inventory options by current selected project
-  const projectFilteredOptions = formData.project 
-    ? inventoryOptions.filter(option => option.project === formData.project) 
-    : inventoryOptions;
-
   // Filter out options that are already selected - by material ID to prevent duplicates
-  const availableOptions = projectFilteredOptions.filter(option => 
+  const availableOptions = inventoryOptions.filter(option => 
     !selectedItems.some(item => item.material === option.material)
   );
 
@@ -95,9 +90,6 @@ const MaterialSelectionStep = ({
     setFormData(newSelectedItems);
   };
 
-  // Determine if project is selected
-  const isProjectSelected = !!formData.project;
-
   return (
     <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
       <Typography variant="subtitle1" sx={{ mb: 2 }}>
@@ -110,12 +102,6 @@ const MaterialSelectionStep = ({
         </Box>
       ) : (
         <>
-          {!isProjectSelected && (
-            <Typography variant="body2" color="warning.main" sx={{ mb: 2 }}>
-              Please select a project in the Logistics Information section first.
-            </Typography>
-          )}
-
           {/* Selected materials table */}
           <MaterialTable 
             selectedItems={selectedItems}
@@ -130,7 +116,6 @@ const MaterialSelectionStep = ({
             handleAddItem={handleAddItem}
             setCurrentSelection={setCurrentSelection}
             materialUoms={materialUoms}
-            isProjectSelected={isProjectSelected}
           />
           
           {/* Selected items count */}

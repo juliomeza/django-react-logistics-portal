@@ -3,7 +3,7 @@ from django.utils import timezone
 
 def generate_order_csv(order):
     """Genera un archivo TAB para la orden en la ruta de red con las columnas especificadas."""
-    file_path = f"\\\\wd02\\Datex\\Import\\CRM_Orders_Import\\order_{order.lookup_code_order}.tab"
+    file_path = f"\\\\wd02\\Datex\\Import\\CRM_Orders_Import\\test\\order_{order.lookup_code_order}.tab"
     with open(file_path, 'w', newline='') as tabfile:
         writer = csv.writer(tabfile, delimiter='\t')
         # Definimos las columnas en el orden exacto
