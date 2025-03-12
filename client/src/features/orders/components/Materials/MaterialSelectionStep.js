@@ -6,7 +6,8 @@ import {
   CircularProgress
 } from '@mui/material';
 import MaterialTable from './MaterialTable';
-import { enrichSelectedItems, createInventoryOptions, validateQuantity } from '../../utils/MaterialUtils';
+import { enrichSelectedItems, createInventoryOptions } from '../../utils/MaterialUtils';
+// Eliminamos la importación de validateQuantity que no se usa
 
 const MaterialSelectionStep = ({ 
   formData, 
@@ -24,15 +25,19 @@ const MaterialSelectionStep = ({
   const [currentLPSelection, setCurrentLPSelection] = useState(null);
   const [materialInputValue, setMaterialInputValue] = useState('');
 
-  // Sync selectedItems with formData.selectedInventories and enrich with available quantities
+  // Modificado: Prevenir que enrichSelectedItems cambie la cantidad disponible
   useEffect(() => {
-    const enrichedItems = enrichSelectedItems(formData.selectedInventories, inventories, materials);
-    
-    if (enrichedItems) {
-      console.log("Enriched items:", enrichedItems);
-      setSelectedItems(enrichedItems);
+    // Solo actualizamos si no hay selecciones previas o si la longitud es diferente
+    if (!selectedItems.length || 
+        selectedItems.length !== (formData.selectedInventories || []).length) {
+      const enrichedItems = enrichSelectedItems(formData.selectedInventories, inventories, materials);
+      
+      if (enrichedItems) {
+        console.log("Enriched items:", enrichedItems);
+        setSelectedItems(enrichedItems);
+      }
     }
-  }, [formData.selectedInventories, inventories, materials]);
+  }, [formData.selectedInventories, inventories, materials, selectedItems.length]); // Añadimos selectedItems.length a las dependencias
 
   // Create inventory options for autocomplete
   const inventoryOptions = createInventoryOptions(inventories, materials);
@@ -111,7 +116,6 @@ const MaterialSelectionStep = ({
     if (!currentLotSelection) return [];
     
     // Filter inventory items for the selected lot
-    // Make sure we're using the license_plate field correctly
     return currentLotSelection.inventoryItems
       .filter(item => item.lot === currentLotSelection.lot)
       .map(item => ({
@@ -128,88 +132,75 @@ const MaterialSelectionStep = ({
   const handleAddItem = (material, lot, lp, quantity = 1) => {
     if (!material) return;
     
-    let itemToAdd;
+    // Determinar qué valores mostrar en la UI
+    const displayName = material.materialName || '';
+    const displayCode = material.materialCode || '';
+    const displayLot = lot ? (lot.lot || '') : '';
+    const displayLP = lp ? (lp.license_plate || lp.licensePlate || '') : '';
     
+    // Usar la misma lógica que getCurrentAvailableQty en MaterialTable.js
+    let displayedAvailableQty;
     if (lp) {
-      // If LP is selected, use that specific inventory item
-      itemToAdd = {
-        id: lp.id,
-        material: lp.material,
-        materialCode: lp.materialCode,
-        materialName: lp.materialName,
-        lot: lp.lot,
-        license_plate: lp.license_plate || lp.licensePlate,
-        licensePlate: lp.license_plate || lp.licensePlate, // For compatibility
-        availableQty: lp.quantity || 0, // Use quantity as the available qty for LP
-        uom: lp.uom,
-        project: lp.project
-      };
+      // Convertir explícitamente a número con parseFloat para LP
+      displayedAvailableQty = lp.quantity ? parseFloat(lp.quantity) : 0;
     } else if (lot) {
-      // If only lot is selected, create an aggregated item for that lot
-      itemToAdd = {
-        id: lot.id,
-        material: lot.material,
-        materialCode: lot.materialCode,
-        materialName: lot.materialName,
-        lot: lot.lot,
-        availableQty: lot.availableQty,
-        uom: lot.uom,
-        project: lot.project
-      };
+      displayedAvailableQty = lot.availableQty || 0;
     } else {
-      // If only material is selected, create an aggregated item for that material
-      itemToAdd = {
-        id: material.id,
-        material: material.material,
-        materialCode: material.materialCode,
-        materialName: material.materialName,
-        availableQty: material.availableQty,
-        uom: material.uom,
-        project: material.project
-      };
+      displayedAvailableQty = material.availableQty || 0;
     }
     
-    // Add new item with the specified quantity
-    const newItem = { 
-      ...itemToAdd, 
-      orderQuantity: quantity,
-      uom: itemToAdd.uom || materials.find(m => m.id === itemToAdd.material)?.uom || 1
+    // Validar la cantidad de orden (sin modificar la cantidad disponible)
+    const validatedOrderQty = Math.min(Math.max(1, quantity), displayedAvailableQty);
+    
+    // Crear el nuevo item preservando exactamente la cantidad disponible mostrada
+    const newItem = {
+      id: lp ? lp.id : (lot ? lot.id : material.id),
+      material: material.material,
+      materialCode: displayCode,
+      materialName: displayName,
+      lot: displayLot,
+      license_plate: displayLP,
+      licensePlate: displayLP, 
+      availableQty: displayedAvailableQty, // Cantidad disponible convertida a número
+      orderQuantity: validatedOrderQty,
+      uom: material.uom || materials.find(m => m.id === material.material)?.uom || 1,
+      project: material.project
     };
     
+    // Actualizar la lista de items seleccionados y el formulario
     const updatedItems = [...selectedItems, newItem];
     setSelectedItems(updatedItems);
-    
-    // CAMBIO: Volver a la forma original para ser compatible con el componente padre
     setFormData(updatedItems);
     
     // Reset selections after adding
-    setCurrentMaterialSelection(null);
-    setCurrentLotSelection(null);
-    setCurrentLPSelection(null);
-    setMaterialInputValue('');
-  };
-
-  // Handle removing an item
-  const handleRemoveItem = (itemId) => {
-    const updatedItems = selectedItems.filter(item => item.id !== itemId);
-    setSelectedItems(updatedItems);
-    // CAMBIO: Volver a la forma original
-    setFormData(updatedItems);
+    setTimeout(() => {
+      setCurrentMaterialSelection(null);
+      setCurrentLotSelection(null);
+      setCurrentLPSelection(null);
+      setMaterialInputValue('');
+      
+      // Reset quantity input
+      const quantityInput = document.getElementById('order-quantity-input');
+      if (quantityInput) {
+        quantityInput.value = "1";
+      }
+    }, 0);
   };
 
   // Handle quantity change for selected items
   const handleQuantityChange = (itemId, newQuantity) => {
     const item = selectedItems.find(item => item.id === itemId);
-    const quantity = validateQuantity(item, newQuantity);
+    
+    // Validar la cantidad de orden (sin modificar la cantidad disponible)
+    const validatedOrderQty = Math.min(Math.max(1, newQuantity), item.availableQty);
 
     const newSelectedItems = selectedItems.map(selectedItem => 
       selectedItem.id === itemId 
-        ? { ...selectedItem, orderQuantity: quantity }
+        ? { ...selectedItem, orderQuantity: validatedOrderQty }
         : selectedItem
     );
     
     setSelectedItems(newSelectedItems);
-    // CAMBIO: Volver a la forma original
     setFormData(newSelectedItems);
   };
 
@@ -222,8 +213,14 @@ const MaterialSelectionStep = ({
     );
     
     setSelectedItems(newSelectedItems);
-    // CAMBIO: Volver a la forma original
     setFormData(newSelectedItems);
+  };
+
+  // Handle removing an item
+  const handleRemoveItem = (itemId) => {
+    const updatedItems = selectedItems.filter(item => item.id !== itemId);
+    setSelectedItems(updatedItems);
+    setFormData(updatedItems);
   };
 
   // Determine if project is selected

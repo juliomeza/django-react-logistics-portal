@@ -35,6 +35,47 @@ const MaterialTable = ({
   handleAddItem,
   materialUoms = {}
 }) => {
+  // Función auxiliar para obtener la cantidad disponible actual
+  const getCurrentAvailableQty = () => {
+    if (currentLPSelection) {
+      // Convert string to number if needed
+      const lpQuantity = currentLPSelection.quantity ? 
+        parseFloat(currentLPSelection.quantity) : 0;
+      
+      return lpQuantity;
+    } else if (currentLotSelection) {
+      return currentLotSelection.availableQty || 0;
+    } else if (currentMaterialSelection) {
+      return currentMaterialSelection.availableQty || 0;
+    } else {
+      return 0;
+    }
+  };
+
+  // Función para manejar el botón de agregar
+  const handleAddButtonClick = () => {
+    // Get the quantity value from the input field
+    const quantityInput = document.getElementById('order-quantity-input');
+    const rawQuantity = quantityInput ? parseInt(quantityInput.value, 10) || 1 : 1;
+    
+    // Validar que la cantidad no exceda lo disponible
+    const availableQty = getCurrentAvailableQty();
+    const validQuantity = Math.min(Math.max(1, rawQuantity), availableQty);
+    
+    // Call handleAddItem with the materials and quantity
+    handleAddItem(
+      currentMaterialSelection, 
+      currentLotSelection, 
+      currentLPSelection, 
+      validQuantity
+    );
+
+    // Resetear el input de cantidad manualmente
+    if (quantityInput) {
+      quantityInput.value = "1";
+    }
+  };
+
   return (
     <TableContainer sx={{ mb: 3 }}>
       <Table size="small">
@@ -186,7 +227,7 @@ const MaterialTable = ({
                 disabled={!currentLotSelection}
                 getOptionLabel={(option) => {
                   if (!option) return '';
-                  return option.license_plate || '';
+                  return option.license_plate || option.licensePlate || '';
                 }}
                 renderInput={(params) => (
                   <TextField 
@@ -202,22 +243,7 @@ const MaterialTable = ({
             
             {/* Available Qty - updates as selections narrow down */}
             <TableCell align="right">
-              {(() => {
-                // Use the same approach as the working parts of the cascade
-                if (currentLPSelection) {
-                  // Convert string to number if needed
-                  const lpQuantity = currentLPSelection.quantity ? 
-                    parseFloat(currentLPSelection.quantity) : 0;
-                  
-                  return formatQuantity(lpQuantity);
-                } else if (currentLotSelection) {
-                  return formatQuantity(currentLotSelection.availableQty || 0);
-                } else if (currentMaterialSelection) {
-                  return formatQuantity(currentMaterialSelection.availableQty || 0);
-                } else {
-                  return formatQuantity(0);
-                }
-              })()}
+              {formatQuantity(getCurrentAvailableQty())}
             </TableCell>
             
             {/* Order Qty - available as soon as material is selected */}
@@ -231,9 +257,7 @@ const MaterialTable = ({
                   InputProps={{
                     inputProps: {
                       min: 1,
-                      max: currentLPSelection ? parseFloat(currentLPSelection.quantity) || 0 : 
-                           currentLotSelection ? currentLotSelection.availableQty || 0 : 
-                           currentMaterialSelection ? currentMaterialSelection.availableQty || 0 : 0,
+                      max: getCurrentAvailableQty(),
                       type: 'number',
                       style: { textAlign: 'center' }
                     }
@@ -257,19 +281,7 @@ const MaterialTable = ({
               <IconButton 
                 color="primary"
                 disabled={!currentMaterialSelection}
-                onClick={() => {
-                  // Get the quantity value from the input field
-                  const quantityInput = document.getElementById('order-quantity-input');
-                  const quantity = quantityInput ? parseInt(quantityInput.value, 10) || 1 : 1;
-                  
-                  // Call handleAddItem with the materials and quantity
-                  handleAddItem(
-                    currentMaterialSelection, 
-                    currentLotSelection, 
-                    currentLPSelection, 
-                    quantity
-                  );
-                }}
+                onClick={handleAddButtonClick}
               >
                 <Add />
               </IconButton>
