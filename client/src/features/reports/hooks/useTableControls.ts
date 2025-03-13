@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 
-// Hook para gestionar paginación y filtrado de tablas
-const useTableControls = (data) => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50); // Default rows per page
-  const [searchTerm, setSearchTerm] = useState('');
+function useTableControls<T extends Record<string, unknown>>(data: T[]) {
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(50);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Reset page when data changes
   useEffect(() => {
@@ -12,8 +11,8 @@ const useTableControls = (data) => {
   }, [data]);
 
   // Filter the data based on search term
-  const filteredData = data.filter(item => 
-    Object.values(item).some(value => 
+  const filteredData = data.filter(item =>
+    Object.values(item).some(value =>
       value && value.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
@@ -25,16 +24,16 @@ const useTableControls = (data) => {
   );
 
   // Handlers
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  const handleSearchChange = (event) => {
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setPage(0);
   };
@@ -47,8 +46,8 @@ const useTableControls = (data) => {
     paginatedData,
     handleChangePage,
     handleChangeRowsPerPage,
-    handleSearchChange
+    handleSearchChange,
   };
-};
+}
 
 export default useTableControls;
