@@ -5,9 +5,8 @@ import {
   ListItemIcon,
   ListItemText
 } from '@mui/material';
-import PdfIcon from '@mui/icons-material/PictureAsPdf';
-import GridOnIcon from '@mui/icons-material/GridOn'; // Para Excel
-import TableRowsIcon from '@mui/icons-material/TableRows'; // Para CSV
+// Importamos los iconos de Lucide en lugar de MUI
+import { FileSpreadsheet, FileText, Table2 } from 'lucide-react';
 
 const DownloadMenu = ({
   anchorEl,
@@ -35,7 +34,8 @@ const DownloadMenu = ({
     >
       <MenuItem onClick={onDownloadExcel} sx={{ py: 1 }}>
         <ListItemIcon sx={{ minWidth: '36px', color: '#1e7e34' }}>
-          <GridOnIcon fontSize="small" />
+          {/* Icono de Lucide para Excel */}
+          <FileSpreadsheet size={20} />
         </ListItemIcon>
         <ListItemText 
           primary="Excel (.xlsx)" 
@@ -44,7 +44,8 @@ const DownloadMenu = ({
       </MenuItem>
       <MenuItem onClick={onDownloadPDF} sx={{ py: 1 }}>
         <ListItemIcon sx={{ minWidth: '36px', color: '#dc3545' }}>
-          <PdfIcon fontSize="small" />
+          {/* Icono de Lucide para PDF */}
+          <FileText size={20} />
         </ListItemIcon>
         <ListItemText 
           primary="PDF (.pdf)" 
@@ -53,7 +54,8 @@ const DownloadMenu = ({
       </MenuItem>
       <MenuItem onClick={onDownloadCSV} sx={{ py: 1 }}>
         <ListItemIcon sx={{ minWidth: '36px', color: '#0d6efd' }}>
-          <TableRowsIcon fontSize="small" />
+          {/* Icono de Lucide para CSV */}
+          <Table2 size={20} />
         </ListItemIcon>
         <ListItemText 
           primary="CSV (.csv)" 
