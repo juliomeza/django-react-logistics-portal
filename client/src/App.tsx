@@ -7,7 +7,7 @@ import OrderView from './features/orders/pages/OrderView';
 import Reports from './features/reports/pages/Reports';
 import ProtectedRoute from './features/layout/ProtectedRoute';
 
-const App = () => {
+const App: React.FC = () => {
   return (
     <Router>
       <AuthProvider>
