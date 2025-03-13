@@ -1,13 +1,29 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { setupInterceptors, clearTokenRefresh, setupTokenRefresh } from '../../services/api/authApi';
 import apiProtected from '../../services/api/secureApi';
 
-const AuthContext = createContext();
+interface Credentials {
+  email: string;
+  password: string;
+}
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+interface AuthContextType {
+  user: any;
+  login: (credentials: Credentials) => Promise<void>;
+  logout: () => Promise<void>;
+  loading: boolean;
+}
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
   const checkAuthStatus = async () => {
@@ -15,7 +31,6 @@ export const AuthProvider = ({ children }) => {
       const response = await api.get('auth-status/');
       const userData = response.data.user;
       setUser(userData ? { ...userData } : null);
-      // Si hay un usuario, configuramos el refresh token
       if (userData) {
         setupTokenRefresh();
       }
@@ -31,13 +46,12 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  // Configure interceptors for both instances using navigate
   useEffect(() => {
     setupInterceptors(api, navigate);
     setupInterceptors(apiProtected, navigate);
   }, [navigate]);
 
-  const login = async (credentials) => {
+  const login = async (credentials: Credentials) => {
     try {
       const response = await api.post('login/', credentials);
       if (response.status === 200) {

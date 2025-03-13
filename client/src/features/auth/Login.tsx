@@ -1,22 +1,31 @@
-import { useState, useContext } from 'react';
+import React, { useState, useContext, ChangeEvent, FormEvent } from 'react';
 import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import AuthContext from './AuthContext';
 
-const Login = () => {
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
-  const { login } = useContext(AuthContext);
+interface Credentials {
+  email: string;
+  password: string;
+}
 
-  const handleChange = (e) => {
+const Login: React.FC = () => {
+  const [credentials, setCredentials] = useState<Credentials>({ email: '', password: '' });
+  const [error, setError] = useState<string>('');
+  const authContext = useContext(AuthContext);
+  if (!authContext) {
+    throw new Error("AuthContext is undefined. Make sure you are using AuthProvider.");
+  }
+  const { login } = authContext;
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(''); // Reinicia el mensaje de error
+    setError('');
     try {
       await login(credentials);
-    } catch (err) {
+    } catch (err: any) {
       if (err.response && err.response.status === 401) {
         setError('Incorrect email address or password');
       } else {
