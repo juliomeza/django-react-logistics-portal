@@ -1,23 +1,48 @@
 import { useState, useEffect } from 'react';
 import apiProtected from '../../../services/api/secureApi';
 
-// Hook para gestionar datos de reportes y fetching
-const useReportsData = () => {
-  const [availableReports, setAvailableReports] = useState([]);
-  const [selectedReport, setSelectedReport] = useState('');
-  const [data, setData] = useState([]);
-  const [columns, setColumns] = useState([]);
-  const [projectInfo, setProjectInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+interface Report {
+  id: number;
+  name: string;
+  category: string;
+  // Agrega otros campos que sean necesarios
+}
+
+interface ReportResponse {
+  columns?: any[];
+  project?: any;
+  results: any[];
+}
+
+interface UseReportsDataReturn {
+  availableReports: Report[];
+  selectedReport: number | string;
+  data: any[];
+  columns: any[];
+  projectInfo: any;
+  loading: boolean;
+  error: string | null;
+  handleReportChange: (reportId: number | string) => void;
+  handleRefresh: () => void;
+}
+
+const useReportsData = (): UseReportsDataReturn => {
+  const [availableReports, setAvailableReports] = useState<Report[]>([]);
+  const [selectedReport, setSelectedReport] = useState<number | string>('');
+  const [data, setData] = useState<any[]>([]);
+  const [columns, setColumns] = useState<any[]>([]);
+  const [projectInfo, setProjectInfo] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch available reports
   const fetchAvailableReports = async () => {
     try {
       const response = await apiProtected.get('reports/');
-      setAvailableReports(response.data);
-      if (response.data.length > 0) {
-        setSelectedReport(response.data[0].id);
+      const reports: Report[] = response.data;
+      setAvailableReports(reports);
+      if (reports.length > 0) {
+        setSelectedReport(reports[0].id);
       }
     } catch (err) {
       console.error('Error fetching available reports:', err);
@@ -26,21 +51,19 @@ const useReportsData = () => {
   };
 
   // Fetch report data
-  const fetchReportData = async (reportId) => {
+  const fetchReportData = async (reportId: number | string) => {
     if (!reportId) return;
     
     setLoading(true);
     setError(null);
     
     try {
-      const response = await apiProtected.get(`reports/${reportId}/execute/`);
+      const response = await apiProtected.get<ReportResponse>(`reports/${reportId}/execute/`);
       
-      // Establecer las columnas si están presentes en la respuesta
       if (response.data.columns) {
         setColumns(response.data.columns);
       }
       
-      // Establecer los datos del proyecto si están presentes en la respuesta
       if (response.data.project) {
         setProjectInfo(response.data.project);
       }
@@ -54,22 +77,18 @@ const useReportsData = () => {
     }
   };
 
-  // Handle report selection change
-  const handleReportChange = (reportId) => {
+  const handleReportChange = (reportId: number | string) => {
     setSelectedReport(reportId);
   };
 
-  // Refresh current report data
   const handleRefresh = () => {
     fetchReportData(selectedReport);
   };
 
-  // Load available reports on hook initialization
   useEffect(() => {
     fetchAvailableReports();
   }, []);
 
-  // Load report data when a report is selected
   useEffect(() => {
     if (selectedReport) {
       fetchReportData(selectedReport);
@@ -85,7 +104,7 @@ const useReportsData = () => {
     loading,
     error,
     handleReportChange,
-    handleRefresh
+    handleRefresh,
   };
 };
 
