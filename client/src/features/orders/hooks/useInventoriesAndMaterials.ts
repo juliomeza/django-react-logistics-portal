@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react';
 import apiProtected from '../../../services/api/secureApi';
 
-const useInventoriesAndMaterials = (user, warehouse) => {
-  const [inventories, setInventories] = useState([]);
-  const [materials, setMaterials] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+interface UseInventoriesAndMaterialsReturn {
+  inventories: any[];
+  materials: any[];
+  loading: boolean;
+  error: string;
+}
+
+const useInventoriesAndMaterials = (user: any, warehouse: string | number): UseInventoriesAndMaterialsReturn => {
+  const [inventories, setInventories] = useState<any[]>([]);
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     if (!user || !warehouse) return;
@@ -17,7 +24,7 @@ const useInventoriesAndMaterials = (user, warehouse) => {
           apiProtected.get('materials/'),
         ]);
         setInventories(
-          invRes.data.filter((inv) => inv.warehouse === parseInt(warehouse, 10))
+          invRes.data.filter((inv: any) => inv.warehouse === parseInt(String(warehouse), 10))
         );
         setMaterials(matRes.data);
       } catch (err) {
