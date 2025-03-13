@@ -11,7 +11,7 @@ import AuthContext from '../../auth/AuthContext';
 import apiProtected from '../../../services/api/secureApi';
 import useReferenceData from '../hooks/useReferenceData';
 import useInventoriesAndMaterials from '../hooks/useInventoriesAndMaterials';
-import OrderSummary from '../components/OrderSummary';
+import OrderSummary from '../components/OrderSummary/OrderSummary';
 
 /**
  * Component to view order details

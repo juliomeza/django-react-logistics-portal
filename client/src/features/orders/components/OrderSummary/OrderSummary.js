@@ -4,10 +4,10 @@ import {
   Typography, 
   Divider
 } from '@mui/material';
-import { findItemById, displayValue } from '../utils/displayUtils';
-import OrderSummarySection from './OrderSummary/OrderSummarySection';
-import InfoItem from './OrderSummary/InfoItem';
-import MaterialsTable from './OrderSummary/MaterialsTable';
+import { findItemById, displayValue } from '../../utils/displayUtils';
+import OrderSummarySection from './OrderSummarySection';
+import InfoItem from './InfoItem';
+import MaterialsTable from './MaterialsTable';
 
 /**
  * A reusable component to display order summary information
