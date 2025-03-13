@@ -2,12 +2,8 @@ import React from 'react';
 import { 
   Table, 
   TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow
+  TableContainer
 } from '@mui/material';
-import { DEFAULT_QUANTITY } from '../../utils/materialSelectionUtils';
 import TableHeader from './TableComponents/TableHeader';
 import SelectedItemsRows from './TableComponents/SelectedItemsRows';
 import CascadeSearchRow from './TableComponents/CascadeSearchRow';
