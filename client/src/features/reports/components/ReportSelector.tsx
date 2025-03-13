@@ -1,72 +1,78 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, MouseEvent } from 'react';
 import {
   FormControl,
   TextField,
   InputAdornment,
   Popover,
   Box,
-  useTheme
+  useTheme,
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
-const ReportSelector = ({ 
-  availableReports, 
-  selectedReport, 
+interface Report {
+  id: number;
+  name: string;
+  category: string;
+}
+
+interface ReportSelectorProps {
+  availableReports: Report[];
+  selectedReport: string | number;
+  onReportChange: (reportId: number) => void;
+  isLoading: boolean;
+}
+
+const ReportSelector: React.FC<ReportSelectorProps> = ({
+  availableReports,
+  selectedReport,
   onReportChange,
-  isLoading 
+  isLoading,
 }) => {
   const theme = useTheme();
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [expandedCategories, setExpandedCategories] = useState({});
-  
-  // Inicializar estados expandidos para las categorías
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     if (availableReports.length > 0) {
       const categories = Array.from(new Set(availableReports.map(report => report.category)));
-      const initialExpandState = {};
+      const initialExpandState: Record<string, boolean> = {};
       categories.forEach(category => {
         initialExpandState[category] = false;
       });
       setExpandedCategories(initialExpandState);
     }
   }, [availableReports]);
-  
-  // Popover handlers
-  const handleClick = (event) => {
+
+  const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  
+
   const handleClose = () => {
     setAnchorEl(null);
   };
-  
-  // Report selection handler
-  const handleReportSelect = (reportId) => {
+
+  const handleReportSelect = (reportId: number) => {
     onReportChange(reportId);
     handleClose();
   };
-  
-  // Category expansion handler
-  const toggleCategory = (category, event) => {
+
+  const toggleCategory = (category: string, event?: MouseEvent<HTMLElement>) => {
     if (event) {
       event.stopPropagation();
     }
     setExpandedCategories(prev => ({
       ...prev,
-      [category]: !prev[category]
+      [category]: !prev[category],
     }));
   };
-  
-  // Get selected report name
-  const selectedReportName = availableReports.find(
-    report => report.id === parseInt(selectedReport)
-  )?.name || 'Select Report';
-  
-  // Check if popover is open
+
+  const selectedReportName =
+    availableReports.find(report => report.id === Number(selectedReport))?.name || 'Select Report';
+
   const open = Boolean(anchorEl);
-  
+
   return (
     <FormControl fullWidth variant="outlined">
       <TextField
@@ -84,7 +90,7 @@ const ReportSelector = ({
         }}
         disabled={isLoading}
       />
-      
+
       <Popover
         open={open}
         anchorEl={anchorEl}
@@ -100,12 +106,11 @@ const ReportSelector = ({
         PaperProps={{
           style: {
             maxHeight: 350,
-            width: anchorEl ? anchorEl.clientWidth : undefined
-          }
+            width: anchorEl ? anchorEl.clientWidth : undefined,
+          },
         }}
       >
         <Box sx={{ p: 1 }}>
-          {/* Simulamos un TreeView con componentes estándar de MUI */}
           <Box sx={{ width: '100%' }}>
             {Array.from(new Set(availableReports.map(report => report.category)))
               .sort()
@@ -125,13 +130,14 @@ const ReportSelector = ({
                       },
                     }}
                   >
-                    {expandedCategories[category] ? 
-                      <ExpandMoreIcon fontSize="small" sx={{ mr: 1 }} /> : 
+                    {expandedCategories[category] ? (
+                      <ExpandMoreIcon fontSize="small" sx={{ mr: 1 }} />
+                    ) : (
                       <ChevronRightIcon fontSize="small" sx={{ mr: 1 }} />
-                    }
+                    )}
                     {category}
                   </Box>
-                  
+
                   {expandedCategories[category] && (
                     <Box sx={{ ml: 3 }}>
                       {availableReports
@@ -148,9 +154,9 @@ const ReportSelector = ({
                               '&:hover': {
                                 backgroundColor: theme.palette.action.hover,
                               },
-                              ...(report.id === parseInt(selectedReport) ? {
-                                backgroundColor: theme.palette.action.selected,
-                              } : {}),
+                              ...(report.id === Number(selectedReport)
+                                ? { backgroundColor: theme.palette.action.selected }
+                                : {}),
                             }}
                           >
                             {report.name}
