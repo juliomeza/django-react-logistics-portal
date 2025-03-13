@@ -14,34 +14,74 @@ import { isWithinLast30Days, filterOrders } from '../utils/DashboardUtils';
 import DashboardFilters from '../components/DashboardFilters';
 import OrdersSection from '../components/OrdersSection';
 import DeleteOrderDialog from '../components/DeleteOrderDialog';
-import { useTheme } from '@mui/material';
+import { useTheme, Theme } from '@mui/material';
 
-const Dashboard = () => {
-  const { user, loading } = useContext(AuthContext);
+interface Order {
+  id: number;
+  order_status: number;
+  lookup_code_order: string;
+  reference_number?: string;
+  contact: number;
+  shipping_address: number;
+  order_type: number;
+  created_date: string;
+  delivery_date?: string;
+  modified_date?: string;
+}
+
+interface OrderStatus {
+  id: number;
+  status_name: string;
+}
+
+interface OrderType {
+  id: number;
+  // Otros campos según se necesiten
+}
+
+interface Contact {
+  id: number;
+  company_name?: string;
+  contact_name?: string;
+}
+
+interface Address {
+  id: number;
+  city?: string;
+  state?: string;
+}
+
+interface AuthContextType {
+  user: any;
+  loading: boolean;
+}
+
+const Dashboard: React.FC = () => {
+  const { user, loading } = useContext(AuthContext) as AuthContextType;
   const navigate = useNavigate();
-  const theme = useTheme();
+  const theme: Theme = useTheme();
 
   // API Data States
-  const [orders, setOrders] = useState([]);
-  const [orderStatuses, setOrderStatuses] = useState([]);
-  const [orderTypes, setOrderTypes] = useState([]);
-  const [contacts, setContacts] = useState([]);
-  const [addresses, setAddresses] = useState([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [orderStatuses, setOrderStatuses] = useState<OrderStatus[]>([]);
+  const [orderTypes, setOrderTypes] = useState<OrderType[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
   
   // UI States
-  const [searchText, setSearchText] = useState('');
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [ordersLoading, setOrdersLoading] = useState(true);
-  const [ordersError, setOrdersError] = useState('');
-  const [activeOrdersOpen, setActiveOrdersOpen] = useState(true);
-  const [deliveredOrdersOpen, setDeliveredOrdersOpen] = useState(true);
+  const [searchText, setSearchText] = useState<string>('');
+  const [selectedTab, setSelectedTab] = useState<number>(0);
+  const [ordersLoading, setOrdersLoading] = useState<boolean>(true);
+  const [ordersError, setOrdersError] = useState<string>('');
+  const [activeOrdersOpen, setActiveOrdersOpen] = useState<boolean>(true);
+  const [deliveredOrdersOpen, setDeliveredOrdersOpen] = useState<boolean>(true);
   
   // Dialog and notification states
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [orderToDelete, setOrderToDelete] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [orderToDelete, setOrderToDelete] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,22 +129,21 @@ const Dashboard = () => {
     if (order.delivery_date) {
       return isWithinLast30Days(order.delivery_date);
     } 
-    
     return isWithinLast30Days(order.modified_date);
   });
 
   // Navigation handlers
-  const handleEditClick = (orderId) => navigate(`/edit-order/${orderId}`);
-  const handleViewClick = (orderId) => navigate(`/order/${orderId}`);
+  const handleEditClick = (orderId: number) => navigate(`/edit-order/${orderId}`);
+  const handleViewClick = (orderId: number) => navigate(`/order/${orderId}`);
   
   // Delete handlers
-  const handleDeleteClick = (orderId) => {
+  const handleDeleteClick = (orderId: number) => {
     setOrderToDelete(orderId);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!orderToDelete) return;
+    if (orderToDelete === null) return;
     try {
       await apiProtected.delete(`/order-lines/order/${orderToDelete}/clear/`);
       await apiProtected.delete(`/orders/${orderToDelete}/`);
@@ -128,7 +167,7 @@ const Dashboard = () => {
   };
 
   // Tab change handler
-  const handleTabChange = (event, newValue) => setSelectedTab(newValue);
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => setSelectedTab(newValue);
 
   // Loading state
   if (loading) {
