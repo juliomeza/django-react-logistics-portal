@@ -11,13 +11,22 @@ import {
   useTheme
 } from '@mui/material';
 
-const ReportTable = ({
+interface ReportTableProps {
+  columns: string[];
+  paginatedData: any[];
+  tableContainerRef: React.RefObject<HTMLDivElement>;
+  onScroll: (event: React.UIEvent<HTMLDivElement>) => void;
+  showLeftShadow: boolean;
+  showRightShadow: boolean;
+}
+
+const ReportTable: React.FC<ReportTableProps> = ({
   columns,
   paginatedData,
   tableContainerRef,
   onScroll,
   showLeftShadow,
-  showRightShadow
+  showRightShadow,
 }) => {
   const theme = useTheme();
 
@@ -55,7 +64,7 @@ const ReportTable = ({
         ref={tableContainerRef}
         onScroll={onScroll}
         sx={{ 
-          maxHeight: '65vh', // Slightly larger to use more vertical space
+          maxHeight: '65vh',
           overflow: 'auto',
           '& .MuiTableHead-root': {
             position: 'sticky',
@@ -67,14 +76,14 @@ const ReportTable = ({
       >
         <Table stickyHeader aria-label="report results table">
           <TableHead>
-            <TableRow sx={{ backgroundColor: (theme) => theme.palette.action.hover }}>
+            <TableRow sx={{ backgroundColor: theme.palette.action.hover }}>
               {columns.map((column) => (
                 <TableCell 
                   key={column}
                   sx={{
                     fontWeight: 'bold',
                     whiteSpace: 'nowrap',
-                    backgroundColor: (theme) => theme.palette.action.hover,
+                    backgroundColor: theme.palette.action.hover,
                   }}
                 >
                   {column}
@@ -88,9 +97,7 @@ const ReportTable = ({
                 {columns.map((column) => (
                   <TableCell 
                     key={column}
-                    sx={{ 
-                      whiteSpace: 'nowrap'
-                    }}
+                    sx={{ whiteSpace: 'nowrap' }}
                   >
                     {row[column]}
                   </TableCell>
