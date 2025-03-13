@@ -10,23 +10,55 @@ import {
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import OrdersTable from './OrdersTable';
+import { Theme } from '@mui/material/styles';
 
-const OrdersSection = ({ 
-  orders, 
-  title, 
-  subtitle, 
-  isOpen, 
-  setIsOpen, 
-  orderStatuses, 
-  contacts, 
-  addresses, 
-  theme, 
-  handleEditClick, 
-  handleViewClick, 
-  handleDeleteClick 
+interface OrderStatus {
+  id: number;
+  status_name: string;
+}
+
+interface Contact {
+  id: number;
+  // Otros campos que se usen...
+}
+
+interface Address {
+  id: number;
+  // Otros campos que se usen...
+}
+
+interface OrdersSectionProps {
+  orders: any[]; // Puedes reemplazar 'any' por una interfaz Order si la defines
+  title: string;
+  subtitle: string;
+  isOpen: boolean;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  orderStatuses: OrderStatus[];
+  contacts: Contact[];
+  addresses: Address[];
+  theme: Theme;
+  handleEditClick: (orderId: number) => void;
+  handleViewClick: (orderId: number) => void;
+  handleDeleteClick: (orderId: number) => void;
+}
+
+const OrdersSection: React.FC<OrdersSectionProps> = ({
+  orders,
+  title,
+  subtitle,
+  isOpen,
+  setIsOpen,
+  orderStatuses,
+  contacts,
+  addresses,
+  theme,
+  handleEditClick,
+  handleViewClick,
+  handleDeleteClick,
 }) => {
   if (orders.length === 0) return null;
 
+  // Lo que está dentro del 'return' es JSX, es decir, el código que describe la estructura y contenido visual del componente.
   return (
     <Box sx={{ mb: 4 }}>
       <Paper 
