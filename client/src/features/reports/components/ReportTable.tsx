@@ -14,7 +14,7 @@ import {
 interface ReportTableProps {
   columns: string[];
   paginatedData: any[];
-  tableContainerRef: React.RefObject<HTMLDivElement>;
+  tableContainerRef: React.RefObject<HTMLDivElement | null>;
   onScroll: (event: React.UIEvent<HTMLDivElement>) => void;
   showLeftShadow: boolean;
   showRightShadow: boolean;
