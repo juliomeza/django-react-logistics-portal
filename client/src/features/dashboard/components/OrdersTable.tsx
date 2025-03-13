@@ -14,27 +14,75 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { getStatusChipColor, isCreatedStatus } from '../utils/DashboardUtils';
+import { Theme } from '@mui/material/styles';
 
-const OrdersTable = ({ 
-  orders, 
-  orderStatuses, 
-  contacts, 
-  addresses, 
-  theme, 
-  handleEditClick, 
-  handleViewClick, 
-  handleDeleteClick 
+interface Order {
+  id: number;
+  order_status: number;
+  lookup_code_order: string;
+  reference_number?: string;
+  contact: number;
+  shipping_address: number;
+}
+
+interface OrderStatus {
+  id: number;
+  status_name: string;
+}
+
+interface Contact {
+  id: number;
+  company_name?: string;
+  contact_name?: string;
+}
+
+interface Address {
+  id: number;
+  city?: string;
+  state?: string;
+}
+
+interface OrdersTableProps {
+  orders: Order[];
+  orderStatuses: OrderStatus[];
+  contacts: Contact[];
+  addresses: Address[];
+  theme: Theme;
+  handleEditClick: (orderId: number) => void;
+  handleViewClick: (orderId: number) => void;
+  handleDeleteClick: (orderId: number) => void;
+}
+
+const OrdersTable: React.FC<OrdersTableProps> = ({
+  orders,
+  orderStatuses,
+  contacts,
+  addresses,
+  theme,
+  handleEditClick,
+  handleViewClick,
+  handleDeleteClick,
 }) => {
   return (
     <TableContainer component={Paper} sx={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell><Typography variant="subtitle2">Order</Typography></TableCell>
-            <TableCell><Typography variant="subtitle2">Reference Number</Typography></TableCell>
-            <TableCell><Typography variant="subtitle2">Customer</Typography></TableCell>
-            <TableCell><Typography variant="subtitle2">Destination</Typography></TableCell>
-            <TableCell><Typography variant="subtitle2">Status</Typography></TableCell>
+            <TableCell>
+              <Typography variant="subtitle2">Order</Typography>
+            </TableCell>
+            <TableCell>
+              <Typography variant="subtitle2">Reference Number</Typography>
+            </TableCell>
+            <TableCell>
+              <Typography variant="subtitle2">Customer</Typography>
+            </TableCell>
+            <TableCell>
+              <Typography variant="subtitle2">Destination</Typography>
+            </TableCell>
+            <TableCell>
+              <Typography variant="subtitle2">Status</Typography>
+            </TableCell>
             <TableCell></TableCell>
           </TableRow>
         </TableHead>
