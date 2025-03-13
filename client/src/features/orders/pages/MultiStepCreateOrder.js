@@ -5,13 +5,13 @@ import AuthContext from '../../auth/AuthContext';
 import OrderDetailsForm from '../components/OrderDetails/OrderDetailsForm';
 import MaterialSelectionStep from '../components/Materials/MaterialSelectionStep';
 import OrderSummary from '../components/OrderSummary/OrderSummary';
-import StepperHeader from '../components/StepperHeader';
+import StepperHeader from '../components/common/StepperHeader';
 import { formReducer, initialFormState } from '../reducers/formReducer';
 import useReferenceData from '../hooks/useReferenceData';
 import useInventoriesAndMaterials from '../hooks/useInventoriesAndMaterials';
 import { saveOrderLines } from '../utils/apiUtils';
 import { validateOrderDetails } from '../utils/OrderValidation';
-import OrderStepActions from '../components/OrderStepActions';
+import OrderStepActions from '../components/common/OrderStepActions';
 import { saveOrderDetails, submitOrder, loadOrderData } from '../utils/OrderSubmission';
 
 // Render step content based on current step
