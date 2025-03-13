@@ -1,15 +1,20 @@
 import React from 'react';
-import { 
-  Box, 
-  Container, 
-  Tabs, 
-  Tab, 
-  TextField, 
-  InputAdornment 
-} from '@mui/material';
+import { Box, Container, Tabs, Tab, TextField, InputAdornment } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
-const DashboardFilters = ({ selectedTab, handleTabChange, searchText, setSearchText }) => {
+interface DashboardFiltersProps {
+  selectedTab: number;
+  handleTabChange: (event: React.SyntheticEvent, newValue: number) => void;
+  searchText: string;
+  setSearchText: React.Dispatch<React.SetStateAction<string>>;
+}
+
+const DashboardFilters: React.FC<DashboardFiltersProps> = ({
+  selectedTab,
+  handleTabChange,
+  searchText,
+  setSearchText,
+}) => {
   return (
     <Box
       sx={{
