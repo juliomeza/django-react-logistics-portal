@@ -1,8 +1,31 @@
-import { useState, useEffect, useCallback } from 'react'; // Añadimos useCallback
+import { useState, useEffect, useCallback } from 'react';
 import apiProtected from '../../../services/api/secureApi';
 
-const useReferenceData = (user) => {
-  const [data, setData] = useState({
+interface ReferenceData {
+  orderTypes: any[];
+  orderClasses: any[];
+  projects: any[];
+  warehouses: any[];
+  contacts: any[];
+  addresses: any[];
+  carriers: any[];
+  carrierServices: any[];
+}
+
+interface UseReferenceDataReturn {
+  data: ReferenceData;
+  loading: boolean;
+  error: string;
+  refetchReferenceData: () => Promise<void>;
+}
+
+interface User {
+  id: string | number;
+  [key: string]: any;
+}
+
+const useReferenceData = (user: User | null): UseReferenceDataReturn => {
+  const [data, setData] = useState<ReferenceData>({
     orderTypes: [],
     orderClasses: [],
     projects: [],
@@ -12,10 +35,9 @@ const useReferenceData = (user) => {
     carriers: [],
     carrierServices: [],
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
 
-  // Definimos fetchData con useCallback para estabilizarla
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -38,12 +60,12 @@ const useReferenceData = (user) => {
         apiProtected.get('carriers/'),
         apiProtected.get('carrier-services/'),
       ]);
-      const userId = parseInt(user.id, 10);
+      const userId = parseInt(String(user?.id || 0), 10);
       setData({
         orderTypes: orderTypesRes.data,
         orderClasses: orderClassesRes.data,
         projects: projectsRes.data.filter(
-          (proj) => Array.isArray(proj.users) && proj.users.includes(userId)
+          (proj: any) => Array.isArray(proj.users) && proj.users.includes(userId)
         ),
         warehouses: warehousesRes.data,
         contacts: contactsRes.data,
@@ -56,9 +78,8 @@ const useReferenceData = (user) => {
     } finally {
       setLoading(false);
     }
-  }, [user]); // Dependencia en user
+  }, [user]);
 
-  // Función para recargar contactos, direcciones y proyectos dinámicamente
   const refetchReferenceData = async () => {
     try {
       const [contactsRes, addressesRes, projectsRes] = await Promise.all([
@@ -66,13 +87,13 @@ const useReferenceData = (user) => {
         apiProtected.get('addresses/'),
         apiProtected.get('projects/'),
       ]);
-      const userId = parseInt(user.id, 10);
+      const userId = parseInt(String(user?.id || 0), 10);
       setData((prev) => ({
         ...prev,
         contacts: contactsRes.data,
         addresses: addressesRes.data,
         projects: projectsRes.data.filter(
-          (proj) => Array.isArray(proj.users) && proj.users.includes(userId)
+          (proj: any) => Array.isArray(proj.users) && proj.users.includes(userId)
         ),
       }));
     } catch (err) {
@@ -84,7 +105,7 @@ const useReferenceData = (user) => {
   useEffect(() => {
     if (!user) return;
     fetchData();
-  }, [user, fetchData]); // Añadimos fetchData como dependencia
+  }, [user, fetchData]);
 
   return { data, loading, error, refetchReferenceData };
 };
