@@ -1,18 +1,13 @@
 import React from 'react';
-import { 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogContentText, 
-  DialogActions, 
-  Button 
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
 
-const DeleteOrderDialog = ({ 
-  open, 
-  onClose, 
-  onConfirm 
-}) => {
+interface DeleteOrderDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+const DeleteOrderDialog: React.FC<DeleteOrderDialogProps> = ({ open, onClose, onConfirm }) => {
   return (
     <Dialog
       open={open}
