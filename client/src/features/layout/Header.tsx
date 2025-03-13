@@ -13,23 +13,23 @@ import {
   Box,
   Divider,
   ListItemIcon,
-  ListItemText
+  ListItemText,
 } from '@mui/material';
 import { Logout, Settings, Person } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AuthContext from '../../features/auth/AuthContext';
 
-const Header = () => {
-  const { user, logout, loading } = useContext(AuthContext);
+const Header: React.FC = () => {
+  const { user, logout, loading } = useContext(AuthContext) as any;
   const location = useLocation();
   const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const fullName = user ? `${user.first_name} ${user.last_name}` : 'Guest User';
   const clientName = !loading && user ? (user.client_name ? user.client_name : 'Company not defined') : '';
 
   // Determinar la pestaña activa
-  const getCurrentTab = () => {
+  const getCurrentTab = (): number | false => {
     if (location.pathname === '/dashboard') return 0;
     if (location.pathname.startsWith('/create-order') || location.pathname.startsWith('/edit-order')) return 1;
     if (location.pathname === '/reports') return 2;
@@ -39,7 +39,7 @@ const Header = () => {
 
   const currentTab = getCurrentTab();
 
-  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
   const handleLogout = () => {
     handleMenuClose();
@@ -47,13 +47,13 @@ const Header = () => {
   };
   const handleProfile = () => {
     handleMenuClose();
-    // Logic to navigate to "My Profile"
+    // Lógica para navegar a "My Profile"
   };
   const handleSettings = () => {
     handleMenuClose();
-    // Logic to navigate to "Settings"
+    // Lógica para navegar a "Settings"
   };
-  const handleTabChange = (event, newValue) => {
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     if (newValue === 0) navigate('/dashboard');
     else if (newValue === 1) navigate('/create-order');
     else if (newValue === 2) navigate('/reports');
