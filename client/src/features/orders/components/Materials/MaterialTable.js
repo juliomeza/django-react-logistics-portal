@@ -5,14 +5,14 @@ import {
   TableCell, 
   TableContainer, 
   TableHead, 
-  TableRow,
-  TextField,
-  IconButton,
-  Typography,
-  Autocomplete
+  TableRow
 } from '@mui/material';
-import { Delete, Add } from '@mui/icons-material';
-import { formatQuantity } from '../../utils/MaterialUtils';
+import { DEFAULT_QUANTITY } from '../../utils/materialSelectionUtils';
+import TableHeader from './TableComponents/TableHeader';
+import SelectedItemsRows from './TableComponents/SelectedItemsRows';
+import CascadeSearchRow from './TableComponents/CascadeSearchRow';
+import EmptyStateMessages from './TableComponents/EmptyStateMessages';
+import { useMaterialTableHandlers } from '../../hooks/useMaterialTableHandlers';
 
 const MaterialTable = ({ 
   selectedItems, 
@@ -35,279 +35,51 @@ const MaterialTable = ({
   handleAddItem,
   materialUoms = {}
 }) => {
-  // Función auxiliar para obtener la cantidad disponible actual
-  const getCurrentAvailableQty = () => {
-    if (currentLPSelection) {
-      // Convert string to number if needed
-      const lpQuantity = currentLPSelection.quantity ? 
-        parseFloat(currentLPSelection.quantity) : 0;
-      
-      return lpQuantity;
-    } else if (currentLotSelection) {
-      return currentLotSelection.availableQty || 0;
-    } else if (currentMaterialSelection) {
-      return currentMaterialSelection.availableQty || 0;
-    } else {
-      return 0;
-    }
-  };
-
-  // Función para manejar el botón de agregar
-  const handleAddButtonClick = () => {
-    // Get the quantity value from the input field
-    const quantityInput = document.getElementById('order-quantity-input');
-    const rawQuantity = quantityInput ? parseInt(quantityInput.value, 10) || 1 : 1;
-    
-    // Validar que la cantidad no exceda lo disponible
-    const availableQty = getCurrentAvailableQty();
-    const validQuantity = Math.min(Math.max(1, rawQuantity), availableQty);
-    
-    // Call handleAddItem with the materials and quantity
-    handleAddItem(
-      currentMaterialSelection, 
-      currentLotSelection, 
-      currentLPSelection, 
-      validQuantity
-    );
-
-    // Resetear el input de cantidad manualmente
-    if (quantityInput) {
-      quantityInput.value = "1";
-    }
-  };
+  const { getCurrentAvailableQty, handleAddButtonClick } = useMaterialTableHandlers({
+    currentMaterialSelection,
+    currentLotSelection,
+    currentLPSelection,
+    handleAddItem
+  });
 
   return (
     <TableContainer sx={{ mb: 3 }}>
       <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Material Code</TableCell>
-            <TableCell width="20%">Material Name</TableCell>
-            <TableCell width="15%">Lot</TableCell>
-            <TableCell width="15%">License Plate</TableCell>
-            <TableCell align="right">Available Qty</TableCell>
-            <TableCell>Order Qty</TableCell>
-            <TableCell align="center">UOM</TableCell>
-            <TableCell align="center">Actions</TableCell>
-          </TableRow>
-        </TableHead>
+        <TableHeader />
         <TableBody>
-          {selectedItems.map((item) => {
-            const material = materials.find(m => m.id === item.material);
-            return (
-              <TableRow key={item.id}>
-                <TableCell>{item.materialCode || material?.lookup_code || '-'}</TableCell>
-                <TableCell>{item.materialName || material?.name || 'Unknown Material'}</TableCell>
-                <TableCell>{item.lot || '-'}</TableCell>
-                <TableCell>{item.license_plate || item.licensePlate || '-'}</TableCell>
-                <TableCell align="right">{formatQuantity(item.availableQty)}</TableCell>
-                <TableCell>
-                  <TextField
-                    size="small"
-                    value={item.orderQuantity || 1}
-                    onChange={(e) => {
-                      const val = e.target.value === '' ? '' : Number(e.target.value);
-                      if (val === '' || !isNaN(val)) {
-                        handleQuantityChange(item.id, val);
-                      }
-                    }}
-                    InputProps={{
-                      inputProps: {
-                        min: 1,
-                        // Ensure max is always a valid number or remove it if not
-                        ...(typeof item.availableQty === 'number' && !isNaN(item.availableQty) && item.availableQty > 0
-                          ? { max: item.availableQty }
-                          : {}),
-                        type: 'number',
-                        style: { textAlign: 'center' }
-                      }
-                    }}
-                    sx={{ width: '80px' }}
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <TextField
-                    select
-                    size="small"
-                    value={item.uom || material?.uom || ''}
-                    onChange={(e) => {
-                      handleUomChange && handleUomChange(item.id, e.target.value);
-                    }}
-                    SelectProps={{
-                      native: true,
-                    }}
-                    sx={{ width: '120px' }}
-                  >
-                    {materialUoms[material?.id] ? 
-                      materialUoms[material?.id].map(uom => (
-                        <option key={uom.id} value={uom.id}>{uom.name}</option>
-                      )) : 
-                      <option value="1">Each</option>
-                    }
-                  </TextField>
-                </TableCell>
-                <TableCell align="center">
-                  <IconButton 
-                    size="small" 
-                    color="error"
-                    onClick={() => handleRemoveItem(item.id)}
-                  >
-                    <Delete fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          {/* Filas de elementos seleccionados */}
+          <SelectedItemsRows 
+            selectedItems={selectedItems}
+            materials={materials}
+            handleQuantityChange={handleQuantityChange}
+            handleUomChange={handleUomChange}
+            handleRemoveItem={handleRemoveItem}
+            materialUoms={materialUoms}
+          />
           
-          {/* Cascade search row */}
-          <TableRow>
-            {/* Material search - first level of cascade */}
-            <TableCell colSpan={2}>
-              <Autocomplete
-                id="material-select"
-                options={materialOptions}
-                value={currentMaterialSelection}
-                onChange={(event, newValue) => {
-                  setCurrentMaterialSelection(newValue);
-                  setCurrentLotSelection(null);
-                  setCurrentLPSelection(null);
-                }}
-                inputValue={inputValue}
-                onInputChange={(event, newValue) => {
-                  setInputValue(newValue);
-                }}
-                getOptionLabel={(option) => `${option.materialCode || ''} - ${option.materialName || ''}`}
-                renderInput={(params) => (
-                  <TextField 
-                    {...params} 
-                    placeholder="Search by code or name"
-                    size="small"
-                  />
-                )}
-                isOptionEqualToValue={(option, value) => option?.material === value?.material}
-                noOptionsText="No materials available"
-                fullWidth
-              />
-            </TableCell>
-            
-            {/* Lot search - second level of cascade */}
-            <TableCell>
-              <Autocomplete
-                id="lot-select"
-                options={lotOptions}
-                value={currentLotSelection}
-                onChange={(event, newValue) => {
-                  setCurrentLotSelection(newValue);
-                  setCurrentLPSelection(null);
-                }}
-                disabled={!currentMaterialSelection}
-                getOptionLabel={(option) => option.lot || ''}
-                renderInput={(params) => (
-                  <TextField 
-                    {...params} 
-                    placeholder="Select lot"
-                    size="small"
-                  />
-                )}
-                noOptionsText="No lots available"
-                fullWidth
-              />
-            </TableCell>
-            
-            {/* License Plate search - third level of cascade */}
-            <TableCell>
-              <Autocomplete
-                id="lp-select"
-                options={lpOptions}
-                value={currentLPSelection}
-                onChange={(event, newValue) => {
-                  console.log("Selected LP:", newValue);
-                  setCurrentLPSelection(newValue);
-                }}
-                disabled={!currentLotSelection}
-                getOptionLabel={(option) => {
-                  if (!option) return '';
-                  return option.license_plate || option.licensePlate || '';
-                }}
-                renderInput={(params) => (
-                  <TextField 
-                    {...params} 
-                    placeholder="Select license plate"
-                    size="small"
-                  />
-                )}
-                noOptionsText="No license plates available"
-                fullWidth
-              />
-            </TableCell>
-            
-            {/* Available Qty - updates as selections narrow down */}
-            <TableCell align="right">
-              {formatQuantity(getCurrentAvailableQty())}
-            </TableCell>
-            
-            {/* Order Qty - available as soon as material is selected */}
-            <TableCell>
-              {currentMaterialSelection && (
-                <TextField
-                  size="small"
-                  defaultValue={1}
-                  id="order-quantity-input"
-                  disabled={!currentMaterialSelection}
-                  InputProps={{
-                    inputProps: {
-                      min: 1,
-                      max: getCurrentAvailableQty(),
-                      type: 'number',
-                      style: { textAlign: 'center' }
-                    }
-                  }}
-                  sx={{ width: '80px' }}
-                />
-              )}
-            </TableCell>
-            
-            {/* UOM - show UOM based on selected material */}
-            <TableCell align="center">
-              {currentMaterialSelection && (
-                materialUoms[currentMaterialSelection.material] ? 
-                  materialUoms[currentMaterialSelection.material][0]?.name : 
-                  'Each'
-              )}
-            </TableCell>
-            
-            {/* Add button - only requires material selection */}
-            <TableCell align="center">
-              <IconButton 
-                color="primary"
-                disabled={!currentMaterialSelection}
-                onClick={handleAddButtonClick}
-              >
-                <Add />
-              </IconButton>
-            </TableCell>
-          </TableRow>
+          {/* Fila de búsqueda en cascada */}
+          <CascadeSearchRow 
+            materialOptions={materialOptions}
+            lotOptions={lotOptions}
+            lpOptions={lpOptions}
+            currentMaterialSelection={currentMaterialSelection}
+            currentLotSelection={currentLotSelection}
+            currentLPSelection={currentLPSelection}
+            setCurrentMaterialSelection={setCurrentMaterialSelection}
+            setCurrentLotSelection={setCurrentLotSelection}
+            setCurrentLPSelection={setCurrentLPSelection}
+            inputValue={inputValue}
+            setInputValue={setInputValue}
+            getCurrentAvailableQty={getCurrentAvailableQty}
+            materialUoms={materialUoms}
+            handleAddButtonClick={handleAddButtonClick}
+          />
           
-          {/* Empty state messages */}
-          {selectedItems.length === 0 && materialOptions?.length > 0 && (
-            <TableRow>
-              <TableCell colSpan={8} align="center" sx={{ py: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Search and select materials to add to your order
-                </Typography>
-              </TableCell>
-            </TableRow>
-          )}
-          
-          {materialOptions?.length === 0 && selectedItems.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={8} align="center" sx={{ py: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  No inventory items available
-                </Typography>
-              </TableCell>
-            </TableRow>
-          )}
+          {/* Mensajes de estado vacío */}
+          <EmptyStateMessages 
+            selectedItems={selectedItems} 
+            materialOptions={materialOptions} 
+          />
         </TableBody>
       </Table>
     </TableContainer>
