@@ -1,11 +1,32 @@
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
 import { buildContactOptions, createCustomFilterOptions } from '../utils/DeliveryInfoUtils';
 import { createContact, assignContactToProject } from '../utils/contactUtils';
 
-/**
- * Estado inicial para un nuevo contacto
- */
-const initialContactState = {
+interface Address {
+  address_line_1: string;
+  address_line_2: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  entity_type: string;
+  address_type: string;
+}
+
+export interface ContactState {
+  company_name: string;
+  contact_name: string;
+  attention: string;
+  phone: string;
+  email: string;
+  mobile: string;
+  title: string;
+  notes: string;
+  shipping_address: Address;
+  billing_address: Address;
+}
+
+const initialContactState: ContactState = {
   company_name: '',
   contact_name: '',
   attention: '',
@@ -36,84 +57,80 @@ const initialContactState = {
   },
 };
 
-/**
- * Hook personalizado para manejar la lógica del formulario de contactos
- */
+interface UseContactFormProps {
+  formData: any;
+  handleChange: (event: { target: { name: string; value: any } }) => void;
+  contacts?: any[];
+  addresses?: any[];
+  projects?: any[];
+  refetchReferenceData: () => Promise<any>;
+}
+
+interface CreateContactResponse {
+  shippingId: any;
+  billingId: any;
+  newContactId: any;
+}
+
 export const useContactForm = ({
   formData,
   handleChange,
   contacts = [],
   addresses = [],
   projects = [],
-  refetchReferenceData
-}) => {
-  // Estado local
-  const [openModal, setOpenModal] = useState(false);
-  const [openWarningDialog, setOpenWarningDialog] = useState(false);
-  const [newContact, setNewContact] = useState(initialContactState);
-  const [sameBillingAddress, setSameBillingAddress] = useState(true);
-  const [modalErrors, setModalErrors] = useState({});
+  refetchReferenceData,
+}: UseContactFormProps) => {
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [openWarningDialog, setOpenWarningDialog] = useState<boolean>(false);
+  const [newContact, setNewContact] = useState<ContactState>(initialContactState);
+  const [sameBillingAddress, setSameBillingAddress] = useState<boolean>(true);
+  const [modalErrors, setModalErrors] = useState<{ [key: string]: boolean | string }>({});
 
-  // Opciones y filtros para la selección de contactos
   const contactOptions = buildContactOptions(contacts, addresses);
   const customFilterOptions = createCustomFilterOptions();
 
-  // Datos seleccionados del formulario
   const selectedContact = formData.contact
-    ? contactOptions.find((c) => c.id === formData.contact) || null
+    ? contactOptions.find((c: any) => c.id === formData.contact) || null
     : null;
 
   const selectedShippingAddress = formData.shipping_address
-    ? addresses.find((a) => a.id === formData.shipping_address)
+    ? addresses.find((a: any) => a.id === formData.shipping_address)
     : null;
 
   const selectedBillingAddress = formData.billing_address
-    ? addresses.find((a) => a.id === formData.billing_address)
+    ? addresses.find((a: any) => a.id === formData.billing_address)
     : null;
 
-  /**
-   * Actualiza el estado del formulario con nuevos valores de contacto y direcciones
-   */
-  const updateFormData = (contactId, shippingId, billingId) => {
+  const updateFormData = (contactId: any, shippingId: any, billingId: any) => {
     handleChange({ target: { name: 'contact', value: contactId } });
     handleChange({ target: { name: 'shipping_address', value: shippingId } });
     handleChange({ target: { name: 'billing_address', value: billingId } });
   };
 
-  /**
-   * Maneja el cambio de contacto en el Autocomplete
-   */
-  const handleContactChange = (event, selectedOption) => {
-    // Si se selecciona la opción "Add New Contact"
+  const handleContactChange = (event: any, selectedOption: any) => {
     if (selectedOption?.isAddOption) {
       handleOpenModal();
       return;
     }
     
-    // Limpiar selección si no hay opción
     if (!selectedOption) {
       updateFormData('', '', '');
       return;
     }
 
-    // Actualizar contacto seleccionado
     updateFormData(selectedOption.id, '', '');
 
-    // Buscar y actualizar direcciones si existen
     if (selectedOption.addresses?.length > 0) {
       updateContactAddresses(selectedOption.addresses);
     }
   };
 
-  /**
-   * Actualiza las direcciones basadas en la lista de direcciones del contacto
-   */
-  const updateContactAddresses = (addressIds) => {
-    const contactAddressList = addresses.filter((addr) =>
+  const updateContactAddresses = (addressIds: any[]) => {
+    const contactAddressList = addresses.filter((addr: any) =>
       addressIds.includes(addr.id)
     );
-    const shippingAddr = contactAddressList.find((addr) => addr.address_type === 'shipping');
-    const billingAddr = contactAddressList.find((addr) => addr.address_type === 'billing');
+    const shippingAddr = contactAddressList.find((addr: any) => addr.address_type === 'shipping');
+    const billingAddr = contactAddressList.find((addr: any) => addr.address_type === 'billing');
     
     if (shippingAddr) {
       handleChange({ target: { name: 'shipping_address', value: shippingAddr.id } });
@@ -124,10 +141,7 @@ export const useContactForm = ({
     }
   };
 
-  /**
-   * Maneja los cambios en el formulario de nuevo contacto
-   */
-  const handleNewContactChange = (e, addressType = null) => {
+  const handleNewContactChange = (e: ChangeEvent<HTMLInputElement>, addressType: 'shipping_address' | 'billing_address' | null = null) => {
     const { name, value } = e.target;
     
     if (addressType) {
@@ -136,8 +150,6 @@ export const useContactForm = ({
         [addressType]: { ...prev[addressType], [name]: value },
       }));
 
-      // Si se cambió shipping_address y el checkbox de misma dirección está marcado,
-      // actualizar también billing_address
       if (addressType === 'shipping_address' && sameBillingAddress) {
         setNewContact((prev) => ({
           ...prev,
@@ -145,22 +157,20 @@ export const useContactForm = ({
         }));
       }
     } else {
-      setNewContact((prev) => ({ ...prev, [name]: value }));
+      setNewContact((prev) => ({
+        ...prev,
+        [name as keyof ContactState]: value,
+      }));
     }
     
-    // Limpiar error si existe
     setModalErrors((prev) => ({ ...prev, [name]: false }));
   };
 
-  /**
-   * Maneja el cambio en la opción "Same as shipping address"
-   */
-  const handleSameAddressChange = (e) => {
+  const handleSameAddressChange = (e: ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
     setSameBillingAddress(checked);
     
     if (checked) {
-      // Copiar campos de shipping a billing
       setNewContact((prev) => ({
         ...prev,
         billing_address: {
@@ -169,7 +179,6 @@ export const useContactForm = ({
         },
       }));
     } else {
-      // Resetear campos de billing
       setNewContact((prev) => ({
         ...prev,
         billing_address: {
@@ -179,21 +188,15 @@ export const useContactForm = ({
     }
   };
 
-  /**
-   * Validación del formulario de nuevo contacto
-   */
   const validateForm = () => {
-    const errors = {};
+    const errors: { [key: string]: boolean | string } = {};
     
-    // Validación de campos básicos
     if (!newContact.company_name) errors.company_name = true;
     if (!newContact.contact_name) errors.contact_name = true;
     if (!newContact.phone) errors.phone = true;
     
-    // Validar shipping_address
     validateAddress(newContact.shipping_address, 'shipping_address', errors);
     
-    // Validar billing_address solo si no es la misma que shipping
     if (!sameBillingAddress) {
       validateAddress(newContact.billing_address, 'billing_address', errors);
     }
@@ -202,10 +205,7 @@ export const useContactForm = ({
     return Object.keys(errors).length === 0;
   };
 
-  /**
-   * Función auxiliar para validar direcciones
-   */
-  const validateAddress = (address, prefix, errors) => {
+  const validateAddress = (address: Address, prefix: string, errors: { [key: string]: boolean | string }) => {
     if (!address.address_line_1) errors[`${prefix}_address_line_1`] = true;
     if (!address.city) errors[`${prefix}_city`] = true;
     if (!address.state) errors[`${prefix}_state`] = true;
@@ -213,9 +213,6 @@ export const useContactForm = ({
     if (!address.country) errors[`${prefix}_country`] = true;
   };
 
-  /**
-   * Abre el modal para añadir un nuevo contacto
-   */
   const handleOpenModal = () => {
     if (!formData.project) {
       setOpenWarningDialog(true);
@@ -224,9 +221,6 @@ export const useContactForm = ({
     setOpenModal(true);
   };
 
-  /**
-   * Guarda un nuevo contacto
-   */
   const handleSaveNewContact = async () => {
     if (!validateForm()) {
       console.log('Validation failed');
@@ -234,10 +228,8 @@ export const useContactForm = ({
     }
 
     try {
-      // Crear contacto con direcciones
-      const { shippingId, billingId, newContactId } = await createContact(newContact, sameBillingAddress);
+      const { shippingId, billingId, newContactId } = (await createContact(newContact, sameBillingAddress)) as CreateContactResponse;
 
-      // Asignar al proyecto
       try {
         await assignContactToProject(newContactId, formData.project, projects);
       } catch (error) {
@@ -245,17 +237,14 @@ export const useContactForm = ({
         setModalErrors({ general: 'Contact created, but could not be assigned to project' });
       }
 
-      // Actualizar formData
       updateFormData(newContactId, shippingId, billingId);
 
-      // Refrescar datos
       await refetchReferenceData();
 
-      // Reiniciar y cerrar
       setOpenModal(false);
       setNewContact(initialContactState);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in save process:', error);
       
       if (error.response) {
