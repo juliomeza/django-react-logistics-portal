@@ -1,12 +1,20 @@
-import { useState } from 'react';
+import { useState, MouseEvent } from 'react';
 
-// Hook para gestionar el menú de descarga
-const useDownloadMenu = () => {
-  const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState(null);
+interface UseDownloadMenuReturn {
+  downloadMenuAnchorEl: HTMLElement | null;
+  downloadMenuOpen: boolean;
+  handleDownloadMenuOpen: (event: MouseEvent<HTMLElement>) => void;
+  handleDownloadMenuClose: () => void;
+  handleDownloadPDF: () => void;
+  handleDownloadCSV: () => void;
+  handleDownloadExcel: () => void;
+}
+
+const useDownloadMenu = (): UseDownloadMenuReturn => {
+  const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState<HTMLElement | null>(null);
   const downloadMenuOpen = Boolean(downloadMenuAnchorEl);
 
-  // Handlers for the download menu
-  const handleDownloadMenuOpen = (event) => {
+  const handleDownloadMenuOpen = (event: MouseEvent<HTMLElement>) => {
     setDownloadMenuAnchorEl(event.currentTarget);
   };
 
@@ -39,7 +47,7 @@ const useDownloadMenu = () => {
     handleDownloadMenuClose,
     handleDownloadPDF,
     handleDownloadCSV,
-    handleDownloadExcel
+    handleDownloadExcel,
   };
 };
 
