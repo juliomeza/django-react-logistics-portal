@@ -20,7 +20,10 @@ import {
   FormControl,
   Popover,
   useTheme,
-  Grid
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -29,6 +32,10 @@ import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import DownloadIcon from '@mui/icons-material/Download';
+import PdfIcon from '@mui/icons-material/PictureAsPdf';
+import GridOnIcon from '@mui/icons-material/GridOn'; // Para Excel
+import TableRowsIcon from '@mui/icons-material/TableRows'; // Para CSV
 import apiProtected from '../../../services/api/secureApi';
 
 // Componente personalizado para el selector de reportes con TreeView
@@ -206,15 +213,17 @@ const Reports = () => {
   const [projectInfo, setProjectInfo] = useState(null);
   const [availableReports, setAvailableReports] = useState([]);
   const [selectedReport, setSelectedReport] = useState('');
-  const [scrollPosition, setScrollPosition] = useState(0);
   const [showLeftShadow, setShowLeftShadow] = useState(false);
   const [showRightShadow, setShowRightShadow] = useState(false);
+  
+  // Estado para el menú de descarga
+  const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState(null);
+  const downloadMenuOpen = Boolean(downloadMenuAnchorEl);
 
   // Handle horizontal scroll
   const handleScroll = () => {
     if (tableContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
-      setScrollPosition(scrollLeft);
       setShowLeftShadow(scrollLeft > 5);
       setShowRightShadow(scrollLeft < scrollWidth - clientWidth - 5);
     }
@@ -231,6 +240,33 @@ const Reports = () => {
     if (tableContainerRef.current) {
       tableContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
     }
+  };
+
+  // Manejadores para el menú de descarga
+  const handleDownloadMenuOpen = (event) => {
+    setDownloadMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleDownloadMenuClose = () => {
+    setDownloadMenuAnchorEl(null);
+  };
+
+  const handleDownloadPDF = () => {
+    handleDownloadMenuClose();
+    // Implementación futura
+    console.log('Download PDF');
+  };
+
+  const handleDownloadCSV = () => {
+    handleDownloadMenuClose();
+    // Implementación futura
+    console.log('Download CSV');
+  };
+
+  const handleDownloadExcel = () => {
+    handleDownloadMenuClose();
+    // Implementación futura
+    console.log('Download Excel');
   };
 
   // Fetch available reports
@@ -388,7 +424,7 @@ const Reports = () => {
               }}
             />
             
-            {/* Project code and refresh - right side */}
+            {/* Project code, refresh and download buttons - right side */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {projectInfo && projectInfo.lookup_code && (
                 <Chip 
@@ -401,6 +437,64 @@ const Reports = () => {
               <IconButton onClick={handleRefresh} color="primary" aria-label="refresh" size="small">
                 <RefreshIcon />
               </IconButton>
+              
+              {/* Botón de descarga/exportar */}
+              <IconButton 
+                onClick={handleDownloadMenuOpen} 
+                color="primary" 
+                aria-label="download" 
+                size="small"
+                aria-controls={downloadMenuOpen ? "download-menu" : undefined}
+                aria-haspopup="true"
+                aria-expanded={downloadMenuOpen ? "true" : undefined}
+              >
+                <DownloadIcon />
+              </IconButton>
+              
+              {/* Menú de opciones de descarga */}
+              <Menu
+                id="download-menu"
+                anchorEl={downloadMenuAnchorEl}
+                open={downloadMenuOpen}
+                onClose={handleDownloadMenuClose}
+                PaperProps={{
+                  elevation: 1,
+                  sx: {
+                    minWidth: '160px',
+                    overflow: 'visible',
+                    filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.12))',
+                    mt: 1
+                  },
+                }}
+              >
+                <MenuItem onClick={handleDownloadExcel} sx={{ py: 1 }}>
+                  <ListItemIcon sx={{ minWidth: '36px', color: '#1e7e34' }}>
+                    <GridOnIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Excel (.xlsx)" 
+                    primaryTypographyProps={{ variant: 'body2', sx: { fontSize: '0.875rem' } }}
+                  />
+                </MenuItem>
+                <MenuItem onClick={handleDownloadPDF} sx={{ py: 1 }}>
+                  <ListItemIcon sx={{ minWidth: '36px', color: '#dc3545' }}>
+                    <PdfIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="PDF (.pdf)" 
+                    primaryTypographyProps={{ variant: 'body2', sx: { fontSize: '0.875rem' } }}
+                  />
+                </MenuItem>
+                <MenuItem onClick={handleDownloadCSV} sx={{ py: 1 }}>
+                  <ListItemIcon sx={{ minWidth: '36px', color: '#0d6efd' }}>
+                    <TableRowsIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="CSV (.csv)" 
+                    primaryTypographyProps={{ variant: 'body2', sx: { fontSize: '0.875rem' } }}
+                  />
+                </MenuItem>
+              </Menu>
             </Box>
           </Box>
         </Container>
