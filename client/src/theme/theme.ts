@@ -1,6 +1,34 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, Theme, ThemeOptions } from '@mui/material/styles';
 
-const theme = createTheme({
+// Define los tipos personalizados para extender la paleta
+declare module '@mui/material/styles' {
+  interface Palette {
+    status: {
+      initial: StatusColorObject;
+      inProgress: StatusColorObject;
+      completed: StatusColorObject;
+      default: StatusColorObject;
+    }
+  }
+  
+  interface PaletteOptions {
+    status?: {
+      initial?: StatusColorObject;
+      inProgress?: StatusColorObject;
+      completed?: StatusColorObject;
+      default?: StatusColorObject;
+    }
+  }
+}
+
+// Define el tipo para los objetos de color de estado
+interface StatusColorObject {
+  backgroundColor: string;
+  color: string;
+  border: string;
+}
+
+const theme: Theme = createTheme({
   palette: {
     primary: {
       main: '#1976d2',

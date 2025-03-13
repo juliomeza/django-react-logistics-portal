@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { NavigateFunction } from 'react-router-dom';
 
 const api = axios.create({
   baseURL: 'http://localhost:8000/api/auth/',
@@ -6,7 +7,7 @@ const api = axios.create({
 });
 
 // Función para renovar el token
-const refreshToken = async () => {
+const refreshToken = async (): Promise<boolean> => {
   try {
     await api.post('refresh/');
     return true;
@@ -17,10 +18,10 @@ const refreshToken = async () => {
 };
 
 // Variable para almacenar el ID del intervalo
-let refreshInterval = null;
+let refreshInterval: NodeJS.Timeout | null = null;
 
 // Configurar temporizador para renovación proactiva
-export const setupTokenRefresh = () => {
+export const setupTokenRefresh = (): void => {
   // Limpiar intervalo anterior si existe
   clearTokenRefresh();
   
@@ -41,17 +42,20 @@ export const setupTokenRefresh = () => {
 };
 
 // Función para limpiar el intervalo cuando se hace logout
-export const clearTokenRefresh = () => {
+export const clearTokenRefresh = (): void => {
   if (refreshInterval) {
     clearInterval(refreshInterval);
     refreshInterval = null;
   }
 };
 
-export const setupInterceptors = (axiosInstance, navigate) => {
+export const setupInterceptors = (
+  axiosInstance: AxiosInstance,
+  navigate?: NavigateFunction
+): void => {
   axiosInstance.interceptors.response.use(
-    (response) => response,
-    async (error) => {
+    (response: AxiosResponse) => response, // Tipado explícito para response
+    async (error: any) => {
       const originalRequest = error.config;
       
       if (originalRequest.url.includes('refresh/')) {

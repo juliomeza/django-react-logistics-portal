@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
-const apiProtected = axios.create({
+const apiProtected: AxiosInstance = axios.create({
   baseURL: 'http://localhost:8000/api/',
   withCredentials: true,
 });
