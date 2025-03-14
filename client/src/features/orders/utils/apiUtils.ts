@@ -1,17 +1,22 @@
 import apiProtected from '../../../services/api/secureApi';
 
-// Handle API errors (adjusted to match original behavior)
-export const handleApiError = (error, defaultMessage) => {
-  const message = error.response?.data
+// Manejar errores de API (ajustado para mantener el comportamiento original)
+export const handleApiError = (error: any, defaultMessage: string): string => {
+  const message: string = error.response?.data
     ? Object.entries(error.response.data)
         .map(([field, msg]) => `${field}: ${msg}`)
         .join('\n')
     : defaultMessage;
-  return message; // Return message instead of setting state directly
+  return message; // Retorna el mensaje en lugar de modificar el estado directamente
 };
 
-// Save order lines
-export const saveOrderLines = async (formData, orderId, setError, setOpenSnackbar) => {
+// Guardar líneas de orden
+export const saveOrderLines = async (
+  formData: any,
+  orderId: any,
+  setError: (msg: string) => void,
+  setOpenSnackbar: (open: boolean) => void
+): Promise<boolean> => {
   if (!Array.isArray(formData.selectedInventories) || formData.selectedInventories.length === 0) {
     setError('Please select at least one material before saving.');
     setOpenSnackbar(true);
@@ -25,7 +30,7 @@ export const saveOrderLines = async (formData, orderId, setError, setOpenSnackba
     console.log('Selected inventories:', formData.selectedInventories);
 
     await apiProtected.delete(`order-lines/order/${orderId}/clear/`);
-    const orderLinePromises = formData.selectedInventories.map((item) => {
+    const orderLinePromises = formData.selectedInventories.map((item: any) => {
       const orderLineData = {
         order: orderId,
         material: item.material,
@@ -37,36 +42,36 @@ export const saveOrderLines = async (formData, orderId, setError, setOpenSnackba
     await Promise.all(orderLinePromises);
     setError('Materials saved successfully');
     setOpenSnackbar(true);
-    return true; // Success
-  } catch (error) {
+    return true; // Éxito
+  } catch (error: any) {
     console.error('Error saving lines:', error);
     const errorMessage = handleApiError(error, 'Failed to save materials. Please try again.');
     setError(errorMessage);
     setOpenSnackbar(true);
-    return false; // Failure
+    return false; // Fallo
   }
 };
 
-// Get first order status
-export const getFirstOrderStatus = async () => {
+// Obtener el primer estado de la orden
+export const getFirstOrderStatus = async (): Promise<number> => {
   try {
     const response = await apiProtected.get('order-statuses/');
-    const createdStatus = response.data.find((status) => status.status_name === 'Created');
+    const createdStatus = response.data.find((status: any) => status.status_name === 'Created');
     return createdStatus ? createdStatus.id : 1;
   } catch (error) {
     console.error('Error fetching statuses:', error);
-    return 1; // Fallback
+    return 1; // Valor por defecto
   }
 };
 
-// Get submitted order status
-export const getSubmittedOrderStatus = async () => {
+// Obtener el estado "Submitted" de la orden
+export const getSubmittedOrderStatus = async (): Promise<number> => {
   try {
     const response = await apiProtected.get('order-statuses/');
-    const submittedStatus = response.data.find((status) => status.status_name === 'Submitted');
+    const submittedStatus = response.data.find((status: any) => status.status_name === 'Submitted');
     return submittedStatus ? submittedStatus.id : 2;
   } catch (error) {
     console.error('Error fetching submitted status:', error);
-    return 2; // Fallback
+    return 2; // Valor por defecto
   }
 };
