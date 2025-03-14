@@ -1,7 +1,12 @@
 import React from 'react';
 import { Stepper, Step, StepLabel, Container } from '@mui/material';
 
-const StepperHeader = ({ activeStep, steps }) => {
+interface StepperHeaderProps {
+  activeStep: number;
+  steps: string[];
+}
+
+const StepperHeader: React.FC<StepperHeaderProps> = ({ activeStep, steps }) => {
   return (
     <Container maxWidth="lg">
       <Stepper activeStep={activeStep} alternativeLabel>

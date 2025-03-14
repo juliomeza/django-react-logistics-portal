@@ -1,7 +1,22 @@
 import React from 'react';
-import { FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, FormHelperText, FormControlProps } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
 
-const SelectField = ({
+interface SelectFieldProps extends Omit<FormControlProps, 'onChange'> {
+  label: string;
+  name: string;
+  value: any;
+  onChange: (event: SelectChangeEvent<any>, child: React.ReactNode) => void;
+  options: any[];
+  required?: boolean;
+  getOptionLabel: (option: any) => string;
+  getOptionValue: (option: any) => string | number;
+  id?: string;
+  error?: boolean;
+  helperText?: string;
+}
+
+const SelectField: React.FC<SelectFieldProps> = ({
   label,
   name,
   value,
