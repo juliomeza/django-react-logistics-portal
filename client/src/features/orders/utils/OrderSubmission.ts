@@ -2,13 +2,26 @@ import apiProtected from '../../../services/api/secureApi';
 import { saveOrderLines, getSubmittedOrderStatus, handleApiError } from './apiUtils';
 import { prepareOrderData } from './OrderValidation';
 
-// Handle saving order details (step 1)
-export const saveOrderDetails = async (formData, orderId, orderIdFromParams, setOrderId, dispatch, setError, setOpenSnackbar) => {
+interface DispatchAction {
+  type: string;
+  [key: string]: any;
+}
+
+// Guarda los detalles de la orden (paso 1)
+export const saveOrderDetails = async (
+  formData: any,
+  orderId: any,
+  orderIdFromParams: any,
+  setOrderId: (id: any) => void,
+  dispatch: (action: DispatchAction) => void,
+  setError: (msg: string) => void,
+  setOpenSnackbar: (open: boolean) => void
+): Promise<boolean> => {
   try {
     const orderData = await prepareOrderData(formData);
-    let response;
+    let response: any;
     const effectiveOrderId = orderId || orderIdFromParams;
-    
+
     if (effectiveOrderId) {
       response = await apiProtected.patch(`orders/${effectiveOrderId}/`, orderData);
       console.log('Order updated:', response.data);
@@ -22,11 +35,11 @@ export const saveOrderDetails = async (formData, orderId, orderIdFromParams, set
       });
       console.log('Order created:', response.data);
     }
-    
+
     setError(effectiveOrderId ? 'Order updated successfully' : 'Order created successfully');
     setOpenSnackbar(true);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     const errorMessage = handleApiError(error, 'Failed to save order. Please try again.');
     setError(errorMessage);
     setOpenSnackbar(true);
@@ -34,22 +47,28 @@ export const saveOrderDetails = async (formData, orderId, orderIdFromParams, set
   }
 };
 
-// Handle final submission of the order
-export const submitOrder = async (formData, orderId, navigate, setError, setOpenSnackbar) => {
+// Envía la orden final
+export const submitOrder = async (
+  formData: any,
+  orderId: any,
+  navigate: (path: string) => void,
+  setError: (msg: string) => void,
+  setOpenSnackbar: (open: boolean) => void
+): Promise<boolean> => {
   try {
     const success = await saveOrderLines(formData, orderId || formData.id, setError, setOpenSnackbar);
     if (!success) throw new Error('Failed to save lines');
-    
+
     const submittedStatusId = await getSubmittedOrderStatus();
     await apiProtected.patch(`orders/${orderId || formData.id}/`, { order_status: submittedStatusId });
-    
+
     setError('Order submitted successfully.');
     setOpenSnackbar(true);
-    
-    // Navigate after successful submission
+
+    // Navega a '/dashboard' después de un breve retardo
     setTimeout(() => navigate('/dashboard'), 2000);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     const errorMessage = handleApiError(error, 'Failed to submit order. Please try again.');
     setError(errorMessage);
     setOpenSnackbar(true);
@@ -57,8 +76,15 @@ export const submitOrder = async (formData, orderId, navigate, setError, setOpen
   }
 };
 
-// Load existing order data
-export const loadOrderData = async (orderIdFromParams, user, dispatch, setOrderId, setError, setOpenSnackbar) => {
+// Carga los datos de una orden existente
+export const loadOrderData = async (
+  orderIdFromParams: any,
+  user: any,
+  dispatch: (action: DispatchAction) => void,
+  setOrderId: (id: any) => void,
+  setError: (msg: string) => void,
+  setOpenSnackbar: (open: boolean) => void
+): Promise<boolean> => {
   try {
     const orderResponse = await apiProtected.get(`orders/${orderIdFromParams}/`);
     const order = orderResponse.data;
@@ -84,7 +110,7 @@ export const loadOrderData = async (orderIdFromParams, user, dispatch, setOrderI
         shipping_address: order.shipping_address ?? '',
         billing_address: order.billing_address ?? '',
         lookup_code_order: order.lookup_code_order ?? '',
-        selectedInventories: linesResponse.data.map((line) => ({
+        selectedInventories: linesResponse.data.map((line: any) => ({
           id: line.id,
           material: line.material,
           license_plate: line.license_plate,
@@ -92,10 +118,10 @@ export const loadOrderData = async (orderIdFromParams, user, dispatch, setOrderI
         })),
       },
     });
-    
+
     setOrderId(orderIdFromParams);
     return true;
-  } catch (err) {
+  } catch (err: any) {
     setError('Failed to load order details or lines.');
     setOpenSnackbar(true);
     console.error('Error:', err);
