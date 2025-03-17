@@ -3,12 +3,45 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Paper, Typog
 import Grid from '@mui/material/Grid2';
 import AddressFormFields from './AddressFormFields';
 
-const ContactFormModal = ({
+interface AddressData {
+  address_line_1: string;
+  address_line_2: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+}
+
+interface NewContact {
+  company_name: string;
+  contact_name: string;
+  phone: string;
+  email: string;
+  shipping_address: AddressData;
+  billing_address: AddressData;
+}
+
+interface ModalErrors {
+  [key: string]: string | undefined;
+}
+
+interface ContactFormModalProps {
+  open: boolean;
+  onClose: () => void;
+  newContact: NewContact;
+  modalErrors: ModalErrors;
+  sameBillingAddress: boolean;
+  handleNewContactChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, addressType?: string) => void;
+  handleSameAddressChange: (e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
+  handleSaveNewContact: () => void;
+}
+
+const ContactFormModal: React.FC<ContactFormModalProps> = ({
   open,
   onClose,
   newContact,
   modalErrors,
-  sameBillingAddress, 
+  sameBillingAddress,
   handleNewContactChange,
   handleSameAddressChange,
   handleSaveNewContact

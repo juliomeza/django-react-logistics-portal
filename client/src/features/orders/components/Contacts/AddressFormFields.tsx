@@ -2,7 +2,23 @@ import React from 'react';
 import { TextField } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 
-const AddressFormFields = ({ 
+interface AddressData {
+  address_line_1: string;
+  address_line_2: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+}
+
+interface AddressFormFieldsProps {
+  addressType: string;
+  addressData: AddressData;
+  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, addressType: string) => void;
+  errors: { [key: string]: any };
+}
+
+const AddressFormFields: React.FC<AddressFormFieldsProps> = ({ 
   addressType, 
   addressData, 
   onChange, 
