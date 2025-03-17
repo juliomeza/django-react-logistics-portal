@@ -110,6 +110,18 @@ export const filterOrders = (
   searchText: string,
   selectedTab: number
 ): Order[] => {
+  console.log('Filtering orders:', {
+    totalOrders: orders.length,
+    searchText,
+    selectedTab,
+    orderTypes: orderTypes.map(t => ({ 
+      id: t.id, 
+      name: t.type_name,
+      is_outbound: t.is_outbound,
+      is_inbound: t.is_inbound 
+    }))
+  });
+
   return orders
     .filter((order) => {
       const contact = contacts.find((c) => c.id === order.contact);
@@ -118,6 +130,7 @@ export const filterOrders = (
       const contactName = contact?.contact_name || '';
       const city = address?.city || '';
       const state = address?.state || '';
+      const orderType = orderTypes.find(type => type.id === order.order_type);
 
       // Search text filtering
       const searchMatch =
@@ -130,13 +143,25 @@ export const filterOrders = (
         state.toLowerCase().includes(searchText.toLowerCase());
 
       // Tab filtering (outbound vs inbound)
-      const outboundTypes = orderTypes
-        .filter((type) => type.type_name?.toLowerCase().includes('outbound') || type.is_outbound)
-        .map((type) => type.id);
-      const inboundTypes = orderTypes
-        .filter((type) => type.type_name?.toLowerCase().includes('inbound') || type.is_inbound)
-        .map((type) => type.id);
-      const tabMatch = selectedTab === 0 ? outboundTypes.includes(order.order_type) : inboundTypes.includes(order.order_type);
+      if (!orderType) {
+        console.warn('Order type not found for order:', order);
+        return false;
+      }
+      
+      const tabMatch = (
+        (selectedTab === 0 && orderType.is_outbound) ||
+        (selectedTab === 1 && orderType.is_inbound)
+      );
+
+      if (!tabMatch) {
+        console.log('Order filtered out:', {
+          orderId: order.id,
+          orderType: orderType.type_name,
+          is_outbound: orderType.is_outbound,
+          is_inbound: orderType.is_inbound,
+          selectedTab
+        });
+      }
 
       return searchMatch && tabMatch;
     })

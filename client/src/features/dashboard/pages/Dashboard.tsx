@@ -8,57 +8,33 @@ import {
   Alert,
 } from '@mui/material';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { useTheme, Theme } from '@mui/material';
 import AuthContext from '../../auth/AuthContext';
 import apiProtected from '../../../services/api/secureApi';
 import { isWithinLast30Days, filterOrders } from '../utils/DashboardUtils';
 import DashboardFilters from '../components/DashboardFilters';
 import OrdersSection from '../components/OrdersSection';
 import DeleteOrderDialog from '../components/DeleteOrderDialog';
-import { useTheme, Theme } from '@mui/material';
-import { AuthUserData } from '../../../types/auth'; // Importando sólo los tipos que necesitamos
-
-// Definimos interfaces locales para los datos que manejamos
-interface Order {
-  id: number;
-  order_status: number;
-  lookup_code_order: string;
-  reference_number?: string;
-  contact: number;
-  shipping_address: number;
-  order_type: number;
-  created_date: string;
-  delivery_date?: string;
-  modified_date?: string;
-}
-
-interface OrderStatus {
-  id: number;
-  status_name: string;
-}
-
-interface OrderType {
-  id: number;
-  type_name?: string;
-  is_outbound?: boolean;
-  is_inbound?: boolean;
-}
-
-interface Contact {
-  id: number;
-  company_name?: string;
-  contact_name?: string;
-}
-
-interface Address {
-  id: number;
-  city?: string;
-  state?: string;
-}
+import { AuthUserData } from '../../../types/auth';
+import { 
+  UIOrder, 
+  UIOrderStatus, 
+  UIOrderType, 
+  UIContact, 
+  UIAddress,
+  adaptOrders,
+  adaptOrderStatuses,
+  adaptOrderTypes,
+  adaptContacts,
+  adaptAddresses
+} from '../../../types/adapters';
 
 interface AuthContextType {
   user: AuthUserData | null;
   loading: boolean;
 }
+
+type AlertSeverity = 'success' | 'error';
 
 const Dashboard: React.FC = () => {
   const { user, loading } = useContext(AuthContext) as AuthContextType;
@@ -66,11 +42,11 @@ const Dashboard: React.FC = () => {
   const theme: Theme = useTheme();
 
   // API Data States
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [orderStatuses, setOrderStatuses] = useState<OrderStatus[]>([]);
-  const [orderTypes, setOrderTypes] = useState<OrderType[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [orders, setOrders] = useState<UIOrder[]>([]);
+  const [orderStatuses, setOrderStatuses] = useState<UIOrderStatus[]>([]);
+  const [orderTypes, setOrderTypes] = useState<UIOrderType[]>([]);
+  const [contacts, setContacts] = useState<UIContact[]>([]);
+  const [addresses, setAddresses] = useState<UIAddress[]>([]);
   
   // UI States
   const [searchText, setSearchText] = useState<string>('');
@@ -83,7 +59,7 @@ const Dashboard: React.FC = () => {
   // Dialog and notification states
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<AlertSeverity>('success');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [orderToDelete, setOrderToDelete] = useState<number | null>(null);
 
@@ -98,14 +74,33 @@ const Dashboard: React.FC = () => {
           apiProtected.get('addresses/'),
         ]);
         
-        // Convertimos los datos de la API a nuestro formato local si es necesario
-        setOrders(ordersRes.data);
-        setOrderStatuses(statusesRes.data);
-        setOrderTypes(typesRes.data);
-        setContacts(contactsRes.data);
-        setAddresses(addressesRes.data);
+        console.log('API Orders:', JSON.stringify(ordersRes.data, null, 2));
+        const adaptedOrders = adaptOrders(ordersRes.data);
+        console.log('Adapted Orders:', JSON.stringify(adaptedOrders, null, 2));
+        setOrders(adaptedOrders);
+        
+        console.log('API Statuses:', JSON.stringify(statusesRes.data, null, 2));
+        const adaptedStatuses = adaptOrderStatuses(statusesRes.data);
+        console.log('Adapted Statuses:', JSON.stringify(adaptedStatuses, null, 2));
+        setOrderStatuses(adaptedStatuses);
+        
+        console.log('API Types:', JSON.stringify(typesRes.data, null, 2));
+        const adaptedTypes = adaptOrderTypes(typesRes.data);
+        console.log('Adapted Types:', JSON.stringify(adaptedTypes, null, 2));
+        setOrderTypes(adaptedTypes);
+        
+        console.log('API Contacts:', JSON.stringify(contactsRes.data, null, 2));
+        const adaptedContacts = adaptContacts(contactsRes.data);
+        console.log('Adapted Contacts:', JSON.stringify(adaptedContacts, null, 2));
+        setContacts(adaptedContacts);
+        
+        console.log('API Addresses:', JSON.stringify(addressesRes.data, null, 2));
+        const adaptedAddresses = adaptAddresses(addressesRes.data);
+        console.log('Adapted Addresses:', JSON.stringify(adaptedAddresses, null, 2));
+        setAddresses(adaptedAddresses);
       } catch (err) {
         setOrdersError('Error loading orders or statuses.');
+        console.error('Error fetching data:', err);
       } finally {
         setOrdersLoading(false);
       }
@@ -131,24 +126,23 @@ const Dashboard: React.FC = () => {
   const deliveredOrders = filteredOrders.filter(order => {
     if (order.order_status !== 7) return false;
     
-    // Check delivery_date first, fall back to modified_date
     if (order.delivery_date) {
       return isWithinLast30Days(order.delivery_date);
     } 
-    return isWithinLast30Days(order.modified_date);
+    return order.modified_date ? isWithinLast30Days(order.modified_date) : false;
   });
 
   // Navigation handlers
-  const handleEditClick = (orderId: number) => navigate(`/edit-order/${orderId}`);
-  const handleViewClick = (orderId: number) => navigate(`/order/${orderId}`);
+  const handleEditClick = (orderId: number): void | Promise<void> => navigate(`/edit-order/${orderId}`);
+  const handleViewClick = (orderId: number): void | Promise<void> => navigate(`/order/${orderId}`);
   
   // Delete handlers
-  const handleDeleteClick = (orderId: number) => {
+  const handleDeleteClick = (orderId: number): void => {
     setOrderToDelete(orderId);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (): Promise<void> => {
     if (orderToDelete === null) return;
     try {
       await apiProtected.delete(`/order-lines/order/${orderToDelete}/clear/`);
@@ -167,13 +161,13 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteCancel = () => {
+  const handleDeleteCancel = (): void => {
     setDeleteDialogOpen(false);
     setOrderToDelete(null);
   };
 
   // Tab change handler
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => setSelectedTab(newValue);
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number): void => setSelectedTab(newValue);
 
   // Loading state
   if (loading) {
@@ -251,6 +245,7 @@ const Dashboard: React.FC = () => {
         open={deleteDialogOpen}
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
+        order={orderToDelete ? orders.find(o => o.id === orderToDelete) : undefined}
       />
 
       {/* Notifications */}
@@ -260,7 +255,11 @@ const Dashboard: React.FC = () => {
         onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+        <Alert 
+          onClose={() => setSnackbarOpen(false)} 
+          severity={snackbarSeverity} 
+          sx={{ width: '100%' }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>
