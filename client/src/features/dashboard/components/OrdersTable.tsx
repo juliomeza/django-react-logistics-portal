@@ -15,39 +15,13 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import { getStatusChipColor, isCreatedStatus } from '../utils/DashboardUtils';
 import { Theme } from '@mui/material/styles';
-
-// Definimos interfaces locales que se ajustan al uso real en el componente
-interface Order {
-  id: number;
-  order_status: number;
-  lookup_code_order: string;
-  reference_number?: string;
-  contact: number;
-  shipping_address: number;
-}
-
-interface OrderStatus {
-  id: number;
-  status_name: string;
-}
-
-interface Contact {
-  id: number;
-  company_name?: string;
-  contact_name?: string;
-}
-
-interface Address {
-  id: number;
-  city?: string;
-  state?: string;
-}
+import { UIOrder, UIOrderStatus, UIContact, UIAddress } from '../../../types/adapters'; // Importamos tipos globales
 
 interface OrdersTableProps {
-  orders: Order[];
-  orderStatuses: OrderStatus[];
-  contacts: Contact[];
-  addresses: Address[];
+  orders: UIOrder[];
+  orderStatuses: UIOrderStatus[];
+  contacts: UIContact[];
+  addresses: UIAddress[];
   theme: Theme;
   handleEditClick: (orderId: number) => void;
   handleViewClick: (orderId: number) => void;
@@ -90,7 +64,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
         <TableBody>
           {orders.map((order) => {
             const status = orderStatuses.find(s => s.id === order.order_status)?.status_name || 'Unknown';
-            const statusStyle = getStatusChipColor(order.order_status, theme);
+            const statusStyle = getStatusChipColor(order.order_status, theme); // Asumimos que devuelve React.CSSProperties
             const canEdit = isCreatedStatus(order.order_status);
             const contact = contacts.find(c => c.id === order.contact);
             const customerDisplay = contact ? (contact.company_name || contact.contact_name || '-') : '-';
