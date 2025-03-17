@@ -1,4 +1,5 @@
 // DashboardUtils.ts
+import { UIOrder, UIContact, UIAddress, UIOrderType } from '../../../types/adapters';
 
 // Tipos reutilizables para el tema (theme)
 interface StatusStyle {
@@ -16,40 +17,6 @@ interface Theme {
       default: StatusStyle;
     };
   };
-}
-
-// Tipos para los datos del dominio - mantenemos las interfaces locales
-// para garantizar la compatibilidad con el código existente
-interface Order {
-  id: number;
-  lookup_code_order: string;
-  reference_number?: string;
-  contact: number;
-  shipping_address: number;
-  order_status: number;
-  order_type: number;
-  created_date: string;
-  modified_date?: string;
-  delivery_date?: string;
-}
-
-interface Contact {
-  id: number;
-  company_name?: string;
-  contact_name?: string;
-}
-
-interface Address {
-  id: number;
-  city?: string;
-  state?: string;
-}
-
-interface OrderType {
-  id: number;
-  type_name?: string;
-  is_outbound?: boolean;
-  is_inbound?: boolean;
 }
 
 // Check if date is within the last 30 days
@@ -103,13 +70,13 @@ export const isCreatedStatus = (statusId: number): boolean => statusId === 1;
 
 // Filter orders based on search text and selected tab
 export const filterOrders = (
-  orders: Order[],
-  contacts: Contact[],
-  addresses: Address[],
-  orderTypes: OrderType[],
+  orders: UIOrder[],
+  contacts: UIContact[],
+  addresses: UIAddress[],
+  orderTypes: UIOrderType[],
   searchText: string,
   selectedTab: number
-): Order[] => {
+): UIOrder[] => {
   return orders
     .filter((order) => {
       const contact = contacts.find((c) => c.id === order.contact);

@@ -11,47 +11,17 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import OrdersTable from './OrdersTable';
 import { Theme } from '@mui/material/styles';
-
-// Definimos interfaces locales que coinciden con el uso actual
-interface Order {
-  id: number;
-  order_status: number;
-  lookup_code_order: string;
-  reference_number?: string;
-  contact: number;
-  shipping_address: number;
-  order_type: number;
-  created_date: string;
-  delivery_date?: string;
-  modified_date?: string;
-}
-
-interface OrderStatus {
-  id: number;
-  status_name: string;
-}
-
-interface Contact {
-  id: number;
-  company_name?: string;
-  contact_name?: string;
-}
-
-interface Address {
-  id: number;
-  city?: string;
-  state?: string;
-}
+import { UIOrder, UIOrderStatus, UIContact, UIAddress } from '../../../types/adapters';
 
 interface OrdersSectionProps {
-  orders: Order[]; // Usamos la interfaz local
+  orders: UIOrder[];
   title: string;
   subtitle: string;
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  orderStatuses: OrderStatus[];
-  contacts: Contact[];
-  addresses: Address[];
+  orderStatuses: UIOrderStatus[];
+  contacts: UIContact[];
+  addresses: UIAddress[];
   theme: Theme;
   handleEditClick: (orderId: number) => void;
   handleViewClick: (orderId: number) => void;
@@ -74,7 +44,6 @@ const OrdersSection: React.FC<OrdersSectionProps> = ({
 }) => {
   if (orders.length === 0) return null;
 
-  // Lo que está dentro del 'return' es JSX, es decir, el código que describe la estructura y contenido visual del componente.
   return (
     <Box sx={{ mb: 4 }}>
       <Paper 

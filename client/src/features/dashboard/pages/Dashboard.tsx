@@ -15,45 +15,13 @@ import DashboardFilters from '../components/DashboardFilters';
 import OrdersSection from '../components/OrdersSection';
 import DeleteOrderDialog from '../components/DeleteOrderDialog';
 import { useTheme, Theme } from '@mui/material';
-import { AuthUserData } from '../../../types/auth'; // Importando sólo los tipos que necesitamos
-
-// Definimos interfaces locales para los datos que manejamos
-interface Order {
-  id: number;
-  order_status: number;
-  lookup_code_order: string;
-  reference_number?: string;
-  contact: number;
-  shipping_address: number;
-  order_type: number;
-  created_date: string;
-  delivery_date?: string;
-  modified_date?: string;
-}
-
-interface OrderStatus {
-  id: number;
-  status_name: string;
-}
-
-interface OrderType {
-  id: number;
-  type_name?: string;
-  is_outbound?: boolean;
-  is_inbound?: boolean;
-}
-
-interface Contact {
-  id: number;
-  company_name?: string;
-  contact_name?: string;
-}
-
-interface Address {
-  id: number;
-  city?: string;
-  state?: string;
-}
+import { AuthUserData } from '../../../types/auth';
+import { Order as ApiOrder, OrderStatus as ApiOrderStatus, OrderType as ApiOrderType } from '../../../types/orders';
+import { Contact as ApiContact, Address as ApiAddress } from '../../../types/logistics';
+import { 
+  UIOrder, UIOrderStatus, UIOrderType, UIContact, UIAddress,
+  adaptOrders, adaptOrderStatuses, adaptOrderTypes, adaptContacts, adaptAddresses
+} from '../../../types/adapters';
 
 interface AuthContextType {
   user: AuthUserData | null;
@@ -66,11 +34,11 @@ const Dashboard: React.FC = () => {
   const theme: Theme = useTheme();
 
   // API Data States
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [orderStatuses, setOrderStatuses] = useState<OrderStatus[]>([]);
-  const [orderTypes, setOrderTypes] = useState<OrderType[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [orders, setOrders] = useState<UIOrder[]>([]);
+  const [orderStatuses, setOrderStatuses] = useState<UIOrderStatus[]>([]);
+  const [orderTypes, setOrderTypes] = useState<UIOrderType[]>([]);
+  const [contacts, setContacts] = useState<UIContact[]>([]);
+  const [addresses, setAddresses] = useState<UIAddress[]>([]);
   
   // UI States
   const [searchText, setSearchText] = useState<string>('');
@@ -91,19 +59,19 @@ const Dashboard: React.FC = () => {
     const fetchData = async () => {
       try {
         const [ordersRes, statusesRes, typesRes, contactsRes, addressesRes] = await Promise.all([
-          apiProtected.get('orders/'),
-          apiProtected.get('order-statuses/'),
-          apiProtected.get('order-types/'),
-          apiProtected.get('contacts/'),
-          apiProtected.get('addresses/'),
+          apiProtected.get<ApiOrder[]>('orders/'),
+          apiProtected.get<ApiOrderStatus[]>('order-statuses/'),
+          apiProtected.get<ApiOrderType[]>('order-types/'),
+          apiProtected.get<ApiContact[]>('contacts/'),
+          apiProtected.get<ApiAddress[]>('addresses/'),
         ]);
         
-        // Convertimos los datos de la API a nuestro formato local si es necesario
-        setOrders(ordersRes.data);
-        setOrderStatuses(statusesRes.data);
-        setOrderTypes(typesRes.data);
-        setContacts(contactsRes.data);
-        setAddresses(addressesRes.data);
+        // Convertir los datos de la API a nuestros tipos de UI utilizando adaptadores
+        setOrders(adaptOrders(ordersRes.data));
+        setOrderStatuses(adaptOrderStatuses(statusesRes.data));
+        setOrderTypes(adaptOrderTypes(typesRes.data));
+        setContacts(adaptContacts(contactsRes.data));
+        setAddresses(adaptAddresses(addressesRes.data));
       } catch (err) {
         setOrdersError('Error loading orders or statuses.');
       } finally {
