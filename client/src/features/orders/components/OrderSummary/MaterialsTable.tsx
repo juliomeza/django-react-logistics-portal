@@ -1,36 +1,34 @@
 import React from 'react';
-import { 
+import {
   Paper,
-  Typography, 
+  Typography,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
 } from '@mui/material';
 
-/**
- * Table component to display materials in the order summary
- * 
- * @param {Object} props - Component props
- * @param {Array} props.materialItems - List of materials to display
- * @param {Function} props.getMaterialName - Function to get material name by ID
- * @param {Function} props.displayValue - Function to format display values
- * @param {Boolean} props.isReviewMode - Whether in review mode
- */
-const MaterialsTable = ({ 
-  materialItems, 
-  getMaterialName, 
+interface MaterialsTableProps {
+  materialItems: any[];
+  getMaterialName: (id: any) => string;
+  displayValue: (value?: any) => React.ReactNode;
+  isReviewMode: boolean;
+}
+
+const MaterialsTable: React.FC<MaterialsTableProps> = ({
+  materialItems,
+  getMaterialName,
   displayValue,
-  isReviewMode 
+  isReviewMode,
 }) => {
   return (
     <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
       <Typography variant="h6" sx={{ mb: 2 }}>
         Selected Materials
       </Typography>
-      
+
       <TableContainer>
         <Table>
           <TableHead>
