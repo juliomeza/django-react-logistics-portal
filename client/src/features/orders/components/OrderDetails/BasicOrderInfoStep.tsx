@@ -3,13 +3,28 @@ import { Paper, Typography, TextField } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import SelectField from '../common/SelectField';
 
-const BasicOrderInfoStep = ({
+interface BasicOrderInfoStepProps {
+  formData: any;
+  handleChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  orderTypes?: any[];
+  orderClasses?: any[];
+  formErrors?: { [key: string]: any };
+  isOrderLocked?: boolean;
+}
+
+const BasicOrderInfoStep: React.FC<BasicOrderInfoStepProps> = ({
   formData,
   handleChange,
   orderTypes = [],
   orderClasses = [],
-  formErrors = {}
+  formErrors = {},
+  isOrderLocked,
 }) => {
+  // Wrapper para adaptar el handleChange a la firma que espera SelectField:
+  const handleSelectChange = (event: any, child: React.ReactNode) => {
+    handleChange(event as React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>);
+  };
+
   return (
     <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
       <Typography variant="subtitle1" sx={{ mb: 2 }}>
@@ -22,11 +37,11 @@ const BasicOrderInfoStep = ({
             label="Order Type"
             name="order_type"
             value={formData.order_type}
-            onChange={handleChange}
+            onChange={handleSelectChange}
             required
             options={orderTypes || []}
-            getOptionLabel={(option) => option.type_name}
-            getOptionValue={(option) => option.id}
+            getOptionLabel={(option: any) => option.type_name}
+            getOptionValue={(option: any) => option.id}
             error={formErrors.order_type}
             helperText={formErrors.order_type && "This field is required"}
           />
@@ -37,11 +52,11 @@ const BasicOrderInfoStep = ({
             label="Order Class"
             name="order_class"
             value={formData.order_class}
-            onChange={handleChange}
+            onChange={handleSelectChange}
             required
             options={orderClasses || []}
-            getOptionLabel={(option) => option.class_name}
-            getOptionValue={(option) => option.id}
+            getOptionLabel={(option: any) => option.class_name}
+            getOptionValue={(option: any) => option.id}
             error={formErrors.order_class}
             helperText={formErrors.order_class && "This field is required"}
           />

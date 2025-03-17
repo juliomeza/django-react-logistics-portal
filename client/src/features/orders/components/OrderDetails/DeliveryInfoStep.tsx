@@ -7,7 +7,19 @@ import AddressDisplay from '../DeliveryInfo/AddressDisplay';
 import ProjectWarningDialog from '../DeliveryInfo/ProjectWarningDialog';
 import ContactFormModal from '../Contacts/ContactFormModal';
 
-const DeliveryInfoStep = ({
+interface DeliveryInfoStepProps {
+  formData: any;
+  handleChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  contacts?: any[];
+  addresses?: any[];
+  formErrors?: { [key: string]: any };
+  projects?: any[];
+  user: any;
+  isOrderLocked: boolean;
+  refetchReferenceData: () => void;
+}
+
+const DeliveryInfoStep: React.FC<DeliveryInfoStepProps> = ({
   formData,
   handleChange,
   contacts = [],
@@ -37,11 +49,13 @@ const DeliveryInfoStep = ({
     setOpenWarningDialog,
   } = useContactForm({
     formData,
-    handleChange,
+    // Adaptamos handleChange para que tenga la firma esperada por el hook:
+    handleChange: (event) => handleChange(event as any),
     contacts,
     addresses,
     projects,
-    refetchReferenceData
+    // Convertimos refetchReferenceData a una función que retorne Promise<any> sin cambiar su lógica:
+    refetchReferenceData: refetchReferenceData as unknown as () => Promise<any>,
   });
 
   return (
@@ -73,13 +87,12 @@ const DeliveryInfoStep = ({
             options={contactOptions}
             value={selectedContact}
             onChange={handleContactChange}
-            getOptionLabel={(option) => {
+            getOptionLabel={(option: any) => {
               if (typeof option === 'string') return option;
               return option?.label || '';
             }}
             renderOption={(props, option) => {
               const { key, ...otherProps } = props;
-              
               if (option.isAddOption) {
                 return (
                   <li key={key} {...otherProps} style={{ fontWeight: 'bold', color: '#1976d2' }}>
@@ -130,9 +143,11 @@ const DeliveryInfoStep = ({
         open={openModal}
         onClose={() => setOpenModal(false)}
         newContact={newContact}
-        modalErrors={modalErrors}
+        modalErrors={modalErrors as any}
         sameBillingAddress={sameBillingAddress}
-        handleNewContactChange={handleNewContactChange}
+        handleNewContactChange={
+          handleNewContactChange as (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, addressType?: string) => void
+        }
         handleSameAddressChange={handleSameAddressChange}
         handleSaveNewContact={handleSaveNewContact}
       />

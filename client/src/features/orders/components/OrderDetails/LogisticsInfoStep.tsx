@@ -3,7 +3,18 @@ import { Paper, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import SelectField from '../common/SelectField';
 
-const LogisticsInfoStep = ({
+interface LogisticsInfoStepProps {
+  formData: any;
+  handleChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  warehouses?: any[];
+  projects?: any[];
+  carriers?: any[];
+  carrierServices?: any[];
+  formErrors?: { [key: string]: any };
+  isOrderLocked?: boolean;
+}
+
+const LogisticsInfoStep: React.FC<LogisticsInfoStepProps> = ({
   formData,
   handleChange,
   warehouses = [],
@@ -13,23 +24,28 @@ const LogisticsInfoStep = ({
   formErrors = {},
   isOrderLocked = false,
 }) => {
+  // Adaptación de handleChange para SelectField:
+  const handleSelectChange = (event: any, child: React.ReactNode) => {
+    handleChange(event as React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>);
+  };
+
   return (
     <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
       <Typography variant="subtitle1" sx={{ mb: 2 }}>
         Logistics Information
       </Typography>
       <Grid container spacing={2}>
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <SelectField
             id="project"
             label="Project"
             name="project"
             value={formData.project || ''}
-            onChange={handleChange}
+            onChange={handleSelectChange}
             required
             options={projects || []}
-            getOptionLabel={(option) => option.name}
-            getOptionValue={(option) => option.id}
+            getOptionLabel={(option: any) => option.name}
+            getOptionValue={(option: any) => option.id}
             error={formErrors.project}
             helperText={formErrors.project && "This field is required"}
             disabled={isOrderLocked}
@@ -41,11 +57,11 @@ const LogisticsInfoStep = ({
             label="Warehouse"
             name="warehouse"
             value={formData.warehouse || ''}
-            onChange={handleChange}
+            onChange={handleSelectChange}
             required
             options={warehouses || []}
-            getOptionLabel={(option) => option.name}
-            getOptionValue={(option) => option.id}
+            getOptionLabel={(option: any) => option.name}
+            getOptionValue={(option: any) => option.id}
             error={formErrors.warehouse}
             helperText={formErrors.warehouse && "This field is required"}
             disabled={isOrderLocked}
@@ -57,10 +73,10 @@ const LogisticsInfoStep = ({
             label="Carrier"
             name="carrier"
             value={formData.carrier || ''}
-            onChange={handleChange}
+            onChange={handleSelectChange}
             options={carriers || []}
-            getOptionLabel={(option) => option.name}
-            getOptionValue={(option) => option.id}
+            getOptionLabel={(option: any) => option.name}
+            getOptionValue={(option: any) => option.id}
             disabled={false}
           />
         </Grid>
@@ -70,10 +86,10 @@ const LogisticsInfoStep = ({
             label="Service Type"
             name="service_type"
             value={formData.service_type || ''}
-            onChange={handleChange}
+            onChange={handleSelectChange}
             options={carrierServices || []}
-            getOptionLabel={(option) => option.name}
-            getOptionValue={(option) => option.id}
+            getOptionLabel={(option: any) => option.name}
+            getOptionValue={(option: any) => option.id}
             disabled={false}
           />
         </Grid>

@@ -2,10 +2,16 @@ import React from 'react';
 import { Paper, Typography, TextField } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 
-const AdditionalInfoStep = ({
+interface AdditionalInfoStepProps {
+  formData: any;
+  handleChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  formErrors?: { [key: string]: any };
+}
+
+const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
   formData,
   handleChange,
-  formErrors = {}
+  formErrors = {},
 }) => {
   return (
     <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>

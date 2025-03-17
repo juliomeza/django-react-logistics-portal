@@ -4,7 +4,24 @@ import LogisticsInfoStep from './LogisticsInfoStep';
 import DeliveryInfoStep from './DeliveryInfoStep';
 import AdditionalInfoStep from './AdditionalInfoStep';
 
-const OrderDetailsForm = ({
+interface OrderDetailsFormProps {
+  formData: any;
+  handleChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  orderTypes?: any[];
+  orderClasses?: any[];
+  warehouses?: any[];
+  projects?: any[];
+  carriers?: any[];
+  carrierServices?: any[];
+  contacts?: any[];
+  addresses?: any[];
+  formErrors?: { [key: string]: any };
+  isOrderLocked: boolean;
+  user: any;
+  refetchReferenceData: () => void;
+}
+
+const OrderDetailsForm: React.FC<OrderDetailsFormProps> = ({
   formData,
   handleChange,
   orderTypes,
@@ -49,13 +66,12 @@ const OrderDetailsForm = ({
         projects={projects}
         user={user}
         isOrderLocked={isOrderLocked}
-        refetchReferenceData={refetchReferenceData} // Pasamos la función
+        refetchReferenceData={refetchReferenceData}
       />
       <AdditionalInfoStep
         formData={formData}
         handleChange={handleChange}
         formErrors={formErrors}
-        isOrderLocked={isOrderLocked}
       />
     </>
   );
