@@ -8,3 +8,4 @@ export * from './inventory';
 export * from './orders';
 export * from './reports';
 export * from './api';
+export * from './auth';

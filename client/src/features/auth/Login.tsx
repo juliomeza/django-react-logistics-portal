@@ -1,11 +1,7 @@
 import React, { useState, useContext, ChangeEvent, FormEvent } from 'react';
 import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import AuthContext from './AuthContext';
-
-interface Credentials {
-  email: string;
-  password: string;
-}
+import { Credentials, ApiError } from '../../types';
 
 const Login: React.FC = () => {
   const [credentials, setCredentials] = useState<Credentials>({ email: '', password: '' });
@@ -25,8 +21,10 @@ const Login: React.FC = () => {
     setError('');
     try {
       await login(credentials);
-    } catch (err: any) {
-      if (err.response && err.response.status === 401) {
+    } catch (err: unknown) {
+      // Tipo más seguro para el error
+      const apiError = err as ApiError;
+      if (apiError.response && apiError.response.status === 401) {
         setError('Incorrect email address or password');
       } else {
         setError('Incorrect email address or password.');

@@ -2,14 +2,10 @@ import { createContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { setupInterceptors, clearTokenRefresh, setupTokenRefresh } from '../../services/api/authApi';
 import apiProtected from '../../services/api/secureApi';
-
-interface Credentials {
-  email: string;
-  password: string;
-}
+import { Credentials, AuthUserData } from '../../types';
 
 interface AuthContextType {
-  user: any;
+  user: AuthUserData | null;
   login: (credentials: Credentials) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -22,13 +18,13 @@ interface AuthProviderProps {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AuthUserData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
   const checkAuthStatus = async () => {
     try {
-      const response = await api.get('auth-status/');
+      const response = await api.get<{ user: AuthUserData | null }>('auth-status/');
       const userData = response.data.user;
       setUser(userData ? { ...userData } : null);
       if (userData) {
