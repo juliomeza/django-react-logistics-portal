@@ -16,6 +16,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { getStatusChipColor, isCreatedStatus } from '../utils/DashboardUtils';
 import { Theme } from '@mui/material/styles';
 
+// Definimos interfaces locales que se ajustan al uso real en el componente
 interface Order {
   id: number;
   order_status: number;

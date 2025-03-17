@@ -18,7 +18,8 @@ interface Theme {
   };
 }
 
-// Tipos para los datos del dominio
+// Tipos para los datos del dominio - mantenemos las interfaces locales
+// para garantizar la compatibilidad con el código existente
 interface Order {
   id: number;
   lookup_code_order: string;

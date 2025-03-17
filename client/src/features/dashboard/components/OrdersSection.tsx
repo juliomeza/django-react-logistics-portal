@@ -12,6 +12,20 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import OrdersTable from './OrdersTable';
 import { Theme } from '@mui/material/styles';
 
+// Definimos interfaces locales que coinciden con el uso actual
+interface Order {
+  id: number;
+  order_status: number;
+  lookup_code_order: string;
+  reference_number?: string;
+  contact: number;
+  shipping_address: number;
+  order_type: number;
+  created_date: string;
+  delivery_date?: string;
+  modified_date?: string;
+}
+
 interface OrderStatus {
   id: number;
   status_name: string;
@@ -19,16 +33,18 @@ interface OrderStatus {
 
 interface Contact {
   id: number;
-  // Otros campos que se usen...
+  company_name?: string;
+  contact_name?: string;
 }
 
 interface Address {
   id: number;
-  // Otros campos que se usen...
+  city?: string;
+  state?: string;
 }
 
 interface OrdersSectionProps {
-  orders: any[]; // Puedes reemplazar 'any' por una interfaz Order si la defines
+  orders: Order[]; // Usamos la interfaz local
   title: string;
   subtitle: string;
   isOpen: boolean;

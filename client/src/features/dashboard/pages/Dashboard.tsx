@@ -15,7 +15,9 @@ import DashboardFilters from '../components/DashboardFilters';
 import OrdersSection from '../components/OrdersSection';
 import DeleteOrderDialog from '../components/DeleteOrderDialog';
 import { useTheme, Theme } from '@mui/material';
+import { AuthUserData } from '../../../types/auth'; // Importando sólo los tipos que necesitamos
 
+// Definimos interfaces locales para los datos que manejamos
 interface Order {
   id: number;
   order_status: number;
@@ -36,7 +38,9 @@ interface OrderStatus {
 
 interface OrderType {
   id: number;
-  // Otros campos según se necesiten
+  type_name?: string;
+  is_outbound?: boolean;
+  is_inbound?: boolean;
 }
 
 interface Contact {
@@ -52,7 +56,7 @@ interface Address {
 }
 
 interface AuthContextType {
-  user: any;
+  user: AuthUserData | null;
   loading: boolean;
 }
 
@@ -93,6 +97,8 @@ const Dashboard: React.FC = () => {
           apiProtected.get('contacts/'),
           apiProtected.get('addresses/'),
         ]);
+        
+        // Convertimos los datos de la API a nuestro formato local si es necesario
         setOrders(ordersRes.data);
         setOrderStatuses(statusesRes.data);
         setOrderTypes(typesRes.data);
