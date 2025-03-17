@@ -1,32 +1,51 @@
 import React from 'react';
-import { 
-  Table, 
-  TableBody, 
-  TableContainer
-} from '@mui/material';
+import { Table, TableBody, TableContainer } from '@mui/material';
 import TableHeader from './TableComponents/TableHeader';
 import SelectedItemsRows from './TableComponents/SelectedItemsRows';
 import CascadeSearchRow from './TableComponents/CascadeSearchRow';
 import EmptyStateMessages from './TableComponents/EmptyStateMessages';
 import { useMaterialTableHandlers } from '../../hooks/useMaterialTableHandlers';
 
-const MaterialTable = ({ 
-  selectedItems, 
-  materials, 
-  handleQuantityChange, 
+interface MaterialTableProps {
+  selectedItems: any[];
+  materials: any[];
+  handleQuantityChange: (itemId: any, newQuantity: number) => void;
+  handleUomChange: (itemId: any, newUom: any) => void;
+  handleRemoveItem: (itemId: any) => void;
+  availableOptions: any;
+  materialOptions: any;
+  lotOptions: any;
+  lpOptions: any;
+  currentMaterialSelection: any;
+  currentLotSelection: any;
+  currentLPSelection: any;
+  setCurrentMaterialSelection: (value: any) => void;
+  setCurrentLotSelection: (value: any) => void;
+  setCurrentLPSelection: (value: any) => void;
+  inputValue: string;
+  setInputValue: (value: string) => void;
+  // Actualizamos la firma para que acepte parámetros opcionales
+  handleAddItem: (material: any, lot?: any, lp?: any, quantity?: number) => void;
+  materialUoms?: { [key: string]: any };
+}
+
+const MaterialTable: React.FC<MaterialTableProps> = ({
+  selectedItems,
+  materials,
+  handleQuantityChange,
   handleUomChange,
-  handleRemoveItem, 
+  handleRemoveItem,
   availableOptions,
-  materialOptions, 
-  lotOptions, 
-  lpOptions, 
-  currentMaterialSelection, 
-  currentLotSelection, 
-  currentLPSelection, 
-  setCurrentMaterialSelection, 
-  setCurrentLotSelection, 
-  setCurrentLPSelection, 
-  inputValue, 
+  materialOptions,
+  lotOptions,
+  lpOptions,
+  currentMaterialSelection,
+  currentLotSelection,
+  currentLPSelection,
+  setCurrentMaterialSelection,
+  setCurrentLotSelection,
+  setCurrentLPSelection,
+  inputValue,
   setInputValue,
   handleAddItem,
   materialUoms = {}
@@ -43,7 +62,6 @@ const MaterialTable = ({
       <Table size="small">
         <TableHeader />
         <TableBody>
-          {/* Filas de elementos seleccionados */}
           <SelectedItemsRows 
             selectedItems={selectedItems}
             materials={materials}
@@ -53,7 +71,6 @@ const MaterialTable = ({
             materialUoms={materialUoms}
           />
           
-          {/* Fila de búsqueda en cascada */}
           <CascadeSearchRow 
             materialOptions={materialOptions}
             lotOptions={lotOptions}
@@ -71,10 +88,9 @@ const MaterialTable = ({
             handleAddButtonClick={handleAddButtonClick}
           />
           
-          {/* Mensajes de estado vacío */}
           <EmptyStateMessages 
-            selectedItems={selectedItems} 
-            materialOptions={materialOptions} 
+            selectedItems={selectedItems}
+            materialOptions={materialOptions}
           />
         </TableBody>
       </Table>

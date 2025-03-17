@@ -2,11 +2,20 @@ import React from 'react';
 import { TableCell, TableRow, TextField, IconButton, Autocomplete } from '@mui/material';
 import { Add } from '@mui/icons-material';
 
-const MaterialSearch = ({ 
-  availableOptions, 
-  currentSelection, 
-  inputValue, 
-  setInputValue, 
+interface MaterialSearchProps {
+  availableOptions: any[];
+  currentSelection: any;
+  inputValue: string;
+  setInputValue: (value: string) => void;
+  handleAddItem: (item: any) => void;
+  setCurrentSelection: (value: any) => void;
+}
+
+const MaterialSearch: React.FC<MaterialSearchProps> = ({
+  availableOptions,
+  currentSelection,
+  inputValue,
+  setInputValue,
   handleAddItem,
   setCurrentSelection
 }) => {

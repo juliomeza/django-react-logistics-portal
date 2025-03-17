@@ -1,17 +1,21 @@
 import React from 'react';
-import { 
-  Paper, 
-  Typography, 
-  Box,
-  CircularProgress
-} from '@mui/material';
+import { Paper, Typography, Box, CircularProgress } from '@mui/material';
 import MaterialTable from './MaterialTable';
 import { useMaterialSelection } from '../../hooks/useMaterialSelection';
 
-const MaterialSelectionStep = ({ 
-  formData, 
-  setFormData, 
-  inventories = [], 
+interface MaterialSelectionStepProps {
+  formData: any;
+  setFormData: (data: any) => void;
+  inventories?: any[];
+  materials?: any[];
+  loading?: boolean;
+  materialUoms?: { [key: string]: any };
+}
+
+const MaterialSelectionStep: React.FC<MaterialSelectionStepProps> = ({
+  formData,
+  setFormData,
+  inventories = [],
   materials = [],
   loading = false,
   materialUoms = {}
@@ -59,7 +63,6 @@ const MaterialSelectionStep = ({
             </Typography>
           )}
 
-          {/* MaterialTable con selección en cascada */}
           <MaterialTable 
             selectedItems={selectedItems}
             materials={materials}
@@ -80,10 +83,8 @@ const MaterialSelectionStep = ({
             setInputValue={setMaterialInputValue}
             handleAddItem={handleAddItem}
             materialUoms={materialUoms}
-            isProjectSelected={isProjectSelected}
           />
           
-          {/* Contador de items seleccionados */}
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2">
               {selectedItems.length} items selected
