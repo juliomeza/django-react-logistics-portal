@@ -1,13 +1,20 @@
 import React from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
+import { Order } from '../../../types';
 
 interface DeleteOrderDialogProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  order?: Pick<Order, 'id' | 'lookup_code_order'>; // Solo necesitamos algunos campos del Order
 }
 
-const DeleteOrderDialog: React.FC<DeleteOrderDialogProps> = ({ open, onClose, onConfirm }) => {
+const DeleteOrderDialog: React.FC<DeleteOrderDialogProps> = ({ 
+  open, 
+  onClose, 
+  onConfirm, 
+  order 
+}) => {
   return (
     <Dialog
       open={open}
@@ -18,13 +25,14 @@ const DeleteOrderDialog: React.FC<DeleteOrderDialogProps> = ({ open, onClose, on
       <DialogTitle id="delete-dialog-title">Delete Order</DialogTitle>
       <DialogContent>
         <DialogContentText id="delete-dialog-description">
-          Are you sure you want to delete this order? This action cannot be undone.
+          {order && `Are you sure you want to delete order ${order.lookup_code_order}?`}
+          {!order && 'Are you sure you want to delete this order?'} 
+          This action cannot be undone.
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">Cancel</Button>
-        <Button onClick={onClose} color="primary">No</Button>
-        <Button onClick={onConfirm} color="error" autoFocus>Yes</Button>
+        <Button onClick={onConfirm} color="error" autoFocus>Delete</Button>
       </DialogActions>
     </Dialog>
   );

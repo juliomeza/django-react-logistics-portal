@@ -2,9 +2,16 @@ import React from 'react';
 import { Box, Container, Tabs, Tab, TextField, InputAdornment } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
+// Define un enum para los tipos de pestaña
+export enum OrderTabType {
+  OUTBOUND = 0,
+  INBOUND = 1
+}
+
 interface DashboardFiltersProps {
-  selectedTab: number;
-  handleTabChange: (event: React.SyntheticEvent, newValue: number) => void;
+  // Usar el enum en lugar de number para mayor especificidad
+  selectedTab: OrderTabType;
+  handleTabChange: (event: React.SyntheticEvent, newValue: OrderTabType) => void;
   searchText: string;
   setSearchText: React.Dispatch<React.SetStateAction<string>>;
 }
