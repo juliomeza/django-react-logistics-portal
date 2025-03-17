@@ -4,10 +4,24 @@ import { Add } from '@mui/icons-material';
 import { formatQuantity } from '../../../utils/MaterialUtils';
 import { DEFAULT_QUANTITY } from '../../../utils/materialSelectionUtils';
 
-/**
- * Componente que muestra la fila de búsqueda en cascada para seleccionar materiales
- */
-const CascadeSearchRow = ({
+interface CascadeSearchRowProps {
+  materialOptions: any[];
+  lotOptions: any[];
+  lpOptions: any[];
+  currentMaterialSelection: any;
+  currentLotSelection: any;
+  currentLPSelection: any;
+  setCurrentMaterialSelection: (value: any) => void;
+  setCurrentLotSelection: (value: any) => void;
+  setCurrentLPSelection: (value: any) => void;
+  inputValue: string;
+  setInputValue: (value: string) => void;
+  getCurrentAvailableQty: () => number;
+  materialUoms: { [key: string]: any };
+  handleAddButtonClick: () => void;
+}
+
+const CascadeSearchRow: React.FC<CascadeSearchRowProps> = ({
   materialOptions,
   lotOptions,
   lpOptions,

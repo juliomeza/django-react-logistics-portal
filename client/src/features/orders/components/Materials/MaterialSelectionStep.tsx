@@ -66,7 +66,9 @@ const MaterialSelectionStep: React.FC<MaterialSelectionStepProps> = ({
           <MaterialTable 
             selectedItems={selectedItems}
             materials={materials}
-            handleQuantityChange={handleQuantityChange}
+            handleQuantityChange={
+              handleQuantityChange as unknown as (itemId: any, newQuantity: string | number) => void
+            }
             handleUomChange={handleUomChange}
             handleRemoveItem={handleRemoveItem}
             availableOptions={materialOptions}

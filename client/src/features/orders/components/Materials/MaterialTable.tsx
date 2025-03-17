@@ -9,7 +9,7 @@ import { useMaterialTableHandlers } from '../../hooks/useMaterialTableHandlers';
 interface MaterialTableProps {
   selectedItems: any[];
   materials: any[];
-  handleQuantityChange: (itemId: any, newQuantity: number) => void;
+  handleQuantityChange: (itemId: any, newQuantity: string | number) => void;
   handleUomChange: (itemId: any, newUom: any) => void;
   handleRemoveItem: (itemId: any) => void;
   availableOptions: any;
@@ -24,7 +24,6 @@ interface MaterialTableProps {
   setCurrentLPSelection: (value: any) => void;
   inputValue: string;
   setInputValue: (value: string) => void;
-  // Actualizamos la firma para que acepte parámetros opcionales
   handleAddItem: (material: any, lot?: any, lp?: any, quantity?: number) => void;
   materialUoms?: { [key: string]: any };
 }
@@ -65,7 +64,7 @@ const MaterialTable: React.FC<MaterialTableProps> = ({
           <SelectedItemsRows 
             selectedItems={selectedItems}
             materials={materials}
-            handleQuantityChange={handleQuantityChange}
+            handleQuantityChange={handleQuantityChange as (itemId: any, newQuantity: string | number) => void}
             handleUomChange={handleUomChange}
             handleRemoveItem={handleRemoveItem}
             materialUoms={materialUoms}

@@ -1,10 +1,12 @@
 import React from 'react';
 import { TableRow, TableCell, Typography } from '@mui/material';
 
-/**
- * Componente que muestra mensajes para estados vacíos en la tabla
- */
-const EmptyStateMessages = ({ selectedItems, materialOptions }) => {
+interface EmptyStateMessagesProps {
+  selectedItems: any[];
+  materialOptions: any[];
+}
+
+const EmptyStateMessages: React.FC<EmptyStateMessagesProps> = ({ selectedItems, materialOptions }) => {
   if (selectedItems.length > 0) {
     return null;
   }

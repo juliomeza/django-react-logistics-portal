@@ -4,10 +4,16 @@ import { Delete } from '@mui/icons-material';
 import { formatQuantity } from '../../../utils/MaterialUtils';
 import { DEFAULT_QUANTITY } from '../../../utils/materialSelectionUtils';
 
-/**
- * Componente que muestra las filas de items seleccionados en la tabla
- */
-const SelectedItemsRows = ({ 
+interface SelectedItemsRowsProps {
+  selectedItems: any[];
+  materials: any[];
+  handleQuantityChange: (itemId: any, newQuantity: number | string) => void;
+  handleUomChange: (itemId: any, newUom: any) => void;
+  handleRemoveItem: (itemId: any) => void;
+  materialUoms: { [key: string]: any };
+}
+
+const SelectedItemsRows: React.FC<SelectedItemsRowsProps> = ({
   selectedItems,
   materials,
   handleQuantityChange,
@@ -22,7 +28,7 @@ const SelectedItemsRows = ({
   return (
     <>
       {selectedItems.map((item) => {
-        const material = materials.find(m => m.id === item.material);
+        const material = materials.find((m) => m.id === item.material);
         return (
           <TableRow key={item.id}>
             <TableCell>{item.materialCode || material?.lookup_code || '-'}</TableCell>
@@ -43,7 +49,9 @@ const SelectedItemsRows = ({
                 InputProps={{
                   inputProps: {
                     min: 1,
-                    ...(typeof item.availableQty === 'number' && !isNaN(item.availableQty) && item.availableQty > 0
+                    ...(typeof item.availableQty === 'number' &&
+                    !isNaN(item.availableQty) &&
+                    item.availableQty > 0
                       ? { max: item.availableQty }
                       : {}),
                     type: 'number',
@@ -67,8 +75,10 @@ const SelectedItemsRows = ({
                 sx={{ width: '120px' }}
               >
                 {materialUoms[material?.id] ? 
-                  materialUoms[material?.id].map(uom => (
-                    <option key={uom.id} value={uom.id}>{uom.name}</option>
+                  materialUoms[material?.id].map((uom: any) => (
+                    <option key={uom.id} value={uom.id}>
+                      {uom.name}
+                    </option>
                   )) : 
                   <option value="1">Each</option>
                 }

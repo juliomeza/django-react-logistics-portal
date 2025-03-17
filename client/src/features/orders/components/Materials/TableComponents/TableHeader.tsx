@@ -1,10 +1,7 @@
 import React from 'react';
 import { TableHead, TableRow, TableCell } from '@mui/material';
 
-/**
- * Componente que muestra el encabezado de la tabla de materiales
- */
-const TableHeader = () => {
+const TableHeader: React.FC = () => {
   return (
     <TableHead>
       <TableRow>
