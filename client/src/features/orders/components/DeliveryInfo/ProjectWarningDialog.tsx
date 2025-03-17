@@ -1,15 +1,12 @@
 import React from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button } from '@mui/material';
 
-/**
- * Diálogo de advertencia que se muestra cuando se intenta agregar un nuevo contacto
- * sin haber seleccionado un proyecto primero
- * 
- * @param {Object} props - Propiedades del componente
- * @param {boolean} props.open - Controla si el diálogo está abierto o cerrado
- * @param {Function} props.onClose - Función para cerrar el diálogo
- */
-const ProjectWarningDialog = ({ open, onClose }) => {
+interface ProjectWarningDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const ProjectWarningDialog: React.FC<ProjectWarningDialogProps> = ({ open, onClose }) => {
   return (
     <Dialog
       open={open}
@@ -25,18 +22,10 @@ const ProjectWarningDialog = ({ open, onClose }) => {
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button 
-          onClick={onClose} 
-          color="primary"
-        >
+        <Button onClick={onClose} color="primary">
           CANCEL
         </Button>
-        <Button 
-          onClick={onClose} 
-          color="primary" 
-          variant="contained"
-          autoFocus
-        >
+        <Button onClick={onClose} color="primary" variant="contained" autoFocus>
           OK
         </Button>
       </DialogActions>

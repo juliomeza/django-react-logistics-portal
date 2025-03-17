@@ -2,15 +2,13 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { formatAddress } from '../../utils/DeliveryInfoUtils';
 
-/**
- * Componente para mostrar una dirección en un cuadro formateado
- * 
- * @param {Object} props - Propiedades del componente
- * @param {string} props.title - Título para mostrar en la parte superior
- * @param {Object} props.address - Objeto con los datos de la dirección
- * @param {boolean} props.error - Indica si hay un error en este campo
- */
-const AddressDisplay = ({ title, address, error }) => (
+interface AddressDisplayProps {
+  title: string;
+  address: any;
+  error: boolean;
+}
+
+const AddressDisplay: React.FC<AddressDisplayProps> = ({ title, address, error }) => (
   <Box
     sx={{
       display: 'flex',
