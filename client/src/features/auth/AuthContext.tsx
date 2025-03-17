@@ -2,14 +2,7 @@ import { createContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { setupInterceptors, clearTokenRefresh, setupTokenRefresh } from '../../services/api/authApi';
 import apiProtected from '../../services/api/secureApi';
-import { Credentials, AuthUserData } from '../../types';
-
-interface AuthContextType {
-  user: AuthUserData | null;
-  login: (credentials: Credentials) => Promise<void>;
-  logout: () => Promise<void>;
-  loading: boolean;
-}
+import { Credentials, AuthUserData, AuthContextType } from '../../types/auth';
 
 interface AuthProviderProps {
   children: ReactNode;

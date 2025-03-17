@@ -18,9 +18,16 @@ import {
 import { Logout, Settings, Person } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AuthContext from '../../features/auth/AuthContext';
+import { AuthContextType } from '../../types/auth';
+
+interface User {
+  first_name: string;
+  last_name: string;
+  client_name?: string;
+}
 
 const Header: React.FC = () => {
-  const { user, logout, loading } = useContext(AuthContext) as any;
+  const { user, logout, loading } = useContext(AuthContext) as AuthContextType;
   const location = useLocation();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -53,7 +60,7 @@ const Header: React.FC = () => {
     handleMenuClose();
     // Lógica para navegar a "Settings"
   };
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     if (newValue === 0) navigate('/dashboard');
     else if (newValue === 1) navigate('/create-order');
     else if (newValue === 2) navigate('/reports');
