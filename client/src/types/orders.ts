@@ -4,15 +4,35 @@ import { Warehouse, Contact, Address, Carrier, CarrierService } from './logistic
 import { Material } from './materials';
 import { Inventory, InventorySerialNumber } from './inventory';
 
-// OrderStatus (Estado de orden)
+/** Códigos de estado predefinidos para órdenes basados en la base de datos */
+export enum OrderStatusCode {
+  CREATED = '01_created',
+  SUBMITTED = '02_submitted',
+  RECEIVED = '03_received',
+  PROCESSING = '04_processing',
+  SHIPPED = '05_shipped',
+  IN_TRANSIT = '06_in_transit',
+  DELIVERED = '07_delivered'
+}
+
+/** 
+ * Estado de una orden que define su situación actual en el flujo de trabajo
+ * @property status_name - Nombre descriptivo del estado
+ * @property lookup_code - Código único que identifica el estado (ej: "01_created")
+ * @property description - Descripción detallada del significado del estado
+ */
 export interface OrderStatus extends TimeStamped {
   id: number;
   status_name: string;
-  lookup_code: string;
+  lookup_code: OrderStatusCode;
   description: string;
 }
 
-// OrderType (Tipo de orden)
+/**
+ * Tipo de orden que categoriza su propósito principal
+ * @property type_name - Nombre descriptivo del tipo de orden
+ * @property lookup_code - Código único que identifica el tipo
+ */
 export interface OrderType extends TimeStamped {
   id: number;
   type_name: string;
@@ -20,7 +40,11 @@ export interface OrderType extends TimeStamped {
   description: string;
 }
 
-// OrderClass (Clase de orden)
+/**
+ * Clase específica de orden que extiende el tipo de orden
+ * @property order_type - Referencia al tipo de orden padre
+ * @property class_name - Nombre descriptivo de la clase
+ */
 export interface OrderClass extends TimeStamped {
   id: number;
   order_type_id: number;
@@ -30,7 +54,11 @@ export interface OrderClass extends TimeStamped {
   description: string;
 }
 
-// OrderCounter (Contador de órdenes)
+/**
+ * Contador de órdenes que lleva el registro del último número de orden generado
+ * @property project - Proyecto asociado al contador
+ * @property last_number - Último número de orden generado
+ */
 export interface OrderCounter extends TimeStamped {
   id: number;
   project_id: number;
@@ -38,7 +66,12 @@ export interface OrderCounter extends TimeStamped {
   last_number: number;
 }
 
-// Order (Orden)
+/**
+ * Orden principal que representa una transacción o movimiento en el sistema
+ * @property lookup_code_order - Código único de la orden (requerido)
+ * @property lookup_code_shipment - Código único del envío asociado (requerido)
+ * @property reference_number - Número de referencia externo opcional
+ */
 export interface Order extends TimeStamped {
   id: number;
   lookup_code_order: string;
@@ -72,7 +105,11 @@ export interface Order extends TimeStamped {
   lines?: OrderLine[];
 }
 
-// OrderLine (Línea de orden)
+/**
+ * Línea de orden que representa un ítem específico dentro de una orden
+ * @property material - Material asociado a la línea
+ * @property quantity - Cantidad del material (debe ser positiva)
+ */
 export interface OrderLine extends TimeStamped {
   id: number;
   order_id: number;
@@ -89,7 +126,10 @@ export interface OrderLine extends TimeStamped {
   notes: string;
 }
 
-// DTO para creación/actualización
+/**
+ * DTO para creación/actualización de órdenes
+ * @property lines - Líneas de la orden que se están creando/actualizando
+ */
 export type CreateOrder = Omit<Order, 'id' | 'created_date' | 'modified_date' | 'lines'> & {
   lines: Omit<OrderLine, 'id' | 'created_date' | 'modified_date' | 'order' | 'order_id'>[];
 };

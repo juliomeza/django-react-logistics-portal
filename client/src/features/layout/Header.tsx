@@ -20,12 +20,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import AuthContext from '../../features/auth/AuthContext';
 import { AuthContextType } from '../../types/auth';
 
-interface User {
-  first_name: string;
-  last_name: string;
-  client_name?: string;
-}
-
 const Header: React.FC = () => {
   const { user, logout, loading } = useContext(AuthContext) as AuthContextType;
   const location = useLocation();
