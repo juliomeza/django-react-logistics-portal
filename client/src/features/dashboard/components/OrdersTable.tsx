@@ -15,13 +15,39 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import { getStatusChipColor, isCreatedStatus } from '../utils/DashboardUtils';
 import { Theme } from '@mui/material/styles';
-import { UIOrder, UIOrderStatus, UIContact, UIAddress } from '../../../types/adapters';
+
+// Definimos interfaces locales que se ajustan al uso real en el componente
+interface Order {
+  id: number;
+  order_status: number;
+  lookup_code_order: string;
+  reference_number?: string;
+  contact: number;
+  shipping_address: number;
+}
+
+interface OrderStatus {
+  id: number;
+  status_name: string;
+}
+
+interface Contact {
+  id: number;
+  company_name?: string;
+  contact_name?: string;
+}
+
+interface Address {
+  id: number;
+  city?: string;
+  state?: string;
+}
 
 interface OrdersTableProps {
-  orders: UIOrder[];
-  orderStatuses: UIOrderStatus[];
-  contacts: UIContact[];
-  addresses: UIAddress[];
+  orders: Order[];
+  orderStatuses: OrderStatus[];
+  contacts: Contact[];
+  addresses: Address[];
   theme: Theme;
   handleEditClick: (orderId: number) => void;
   handleViewClick: (orderId: number) => void;
