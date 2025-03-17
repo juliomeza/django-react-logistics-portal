@@ -1,4 +1,4 @@
-import React, { useState, useContext, useReducer, useEffect } from 'react';
+import React, { useState, useContext, useReducer, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Container, Typography, Snackbar, Alert } from '@mui/material';
 import { useNavigate, Navigate, useParams } from 'react-router-dom';
 import AuthContext from '../../auth/AuthContext';
@@ -6,7 +6,7 @@ import OrderDetailsForm from '../components/OrderDetails/OrderDetailsForm';
 import MaterialSelectionStep from '../components/Materials/MaterialSelectionStep';
 import OrderSummary from '../components/OrderSummary/OrderSummary';
 import StepperHeader from '../components/common/StepperHeader';
-import { formReducer, initialFormState } from '../reducers/formReducer';
+import { formReducer, initialFormState, FormState } from '../reducers/formReducer';
 import useReferenceData from '../hooks/useReferenceData';
 import useInventoriesAndMaterials from '../hooks/useInventoriesAndMaterials';
 import { saveOrderLines } from '../utils/apiUtils';
@@ -14,19 +14,18 @@ import { validateOrderDetails } from '../utils/OrderValidation';
 import OrderStepActions from '../components/common/OrderStepActions';
 import { saveOrderDetails, submitOrder, loadOrderData } from '../utils/OrderSubmission';
 
-// Render step content based on current step
 const renderStepContent = (
-  step,
-  formData,
-  handleChange,
-  referenceData,
-  inventoriesAndMaterials,
-  formErrors,
-  isOrderLocked,
-  user,
-  refetchReferenceData,
-  dispatch
-) => {
+  step: number,
+  formData: FormState,
+  handleChange: (e: ChangeEvent<HTMLInputElement>) => void,
+  referenceData: any,
+  inventoriesAndMaterials: any,
+  formErrors: any,
+  isOrderLocked: boolean,
+  user: any,
+  refetchReferenceData: any,
+  dispatch: React.Dispatch<any>
+): React.ReactNode => {
   switch (step) {
     case 0:
       return (
@@ -51,7 +50,7 @@ const renderStepContent = (
       return (
         <MaterialSelectionStep
           formData={formData}
-          setFormData={(inventories) =>
+          setFormData={(inventories: any) =>
             dispatch({ type: 'SET_INVENTORIES', inventories })
           }
           inventories={inventoriesAndMaterials.inventories}
@@ -61,54 +60,61 @@ const renderStepContent = (
       );
     case 2:
       return (
-      <OrderSummary
-        orderData={formData}
-        referenceData={referenceData}
-        materials={inventoriesAndMaterials.materials}
-        materialItems={formData.selectedInventories}
-        isReviewMode={true}
-      />
+        <OrderSummary
+          orderData={formData}
+          referenceData={referenceData}
+          materials={inventoriesAndMaterials.materials}
+          materialItems={formData.selectedInventories}
+          isReviewMode={true}
+        />
       );
     default:
-    return null;
+      return null;
   }
 };
 
-const MultiStepCreateOrder = () => {
-  const { user, loading: authLoading } = useContext(AuthContext);
+const MultiStepCreateOrder: React.FC = () => {
+  const authContext = useContext(AuthContext);
+  if (!authContext) {
+    throw new Error("AuthContext is undefined");
+  }
+  const { user, loading: authLoading } = authContext;
   const navigate = useNavigate();
-  const { orderId: orderIdFromParams } = useParams();
+  const { orderId: orderIdFromParams } = useParams<{ orderId: string }>();
 
   const [formData, dispatch] = useReducer(formReducer, initialFormState);
   const { data: referenceData, refetchReferenceData } = useReferenceData(user);
   const inventoriesAndMaterials = useInventoriesAndMaterials(user, formData.warehouse);
 
-  // Component state
-  const [orderId, setOrderId] = useState(null);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [error, setError] = useState('');
-  const [formErrors, setFormErrors] = useState({});
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  
-  const steps = ['Order Details', 'Materials', 'Review'];
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [error, setError] = useState<string>('');
+  const [formErrors, setFormErrors] = useState<any>({});
+  const [openSnackbar, setOpenSnackbar] = useState<boolean>(false);
+
+  const steps: string[] = ['Order Details', 'Materials', 'Review'];
   const isOrderLocked = !!(orderId || orderIdFromParams);
 
-  // Load existing order data if editing
   useEffect(() => {
     if (orderIdFromParams && user) {
-      loadOrderData(orderIdFromParams, user, dispatch, setOrderId, setError, setOpenSnackbar);
+      loadOrderData(
+        orderIdFromParams,
+        user,
+        dispatch as React.Dispatch<any>,
+        setOrderId,
+        setError,
+        setOpenSnackbar
+      );
     }
   }, [orderIdFromParams, user]);
 
-  // Form change handler
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    dispatch({ type: 'UPDATE_FIELD', field: name, value });
-    setFormErrors((prev) => ({ ...prev, [name]: false }));
+    dispatch({ type: 'UPDATE_FIELD', field: name as keyof FormState, value });
+    setFormErrors((prev: any) => ({ ...prev, [name]: false }));
   };
 
-  // Step 1 - Order Details validation and save
-  const handleOrderDetailsNext = async () => {
+  const handleOrderDetailsNext = async (): Promise<void> => {
     const newErrors = validateOrderDetails(formData);
 
     if (Object.keys(newErrors).length > 0) {
@@ -119,30 +125,33 @@ const MultiStepCreateOrder = () => {
     }
 
     const success = await saveOrderDetails(
-      formData, 
-      orderId, 
-      orderIdFromParams, 
-      setOrderId, 
-      dispatch, 
-      setError, 
+      formData,
+      orderId,
+      orderIdFromParams,
+      setOrderId,
+      dispatch as React.Dispatch<any>,
+      setError,
       setOpenSnackbar
     );
-    
+
     if (success) {
       setCurrentStep((prev) => prev + 1);
     }
   };
 
-  // Step 2 - Materials validation and save
-  const handleMaterialsNext = async () => {
-    const success = await saveOrderLines(formData, orderId || formData.id, setError, setOpenSnackbar);
+  const handleMaterialsNext = async (): Promise<void> => {
+    const success = await saveOrderLines(
+      formData,
+      orderId || (formData as any).id,
+      setError,
+      setOpenSnackbar
+    );
     if (success) {
       setCurrentStep((prev) => prev + 1);
     }
   };
 
-  // Generic next button handler
-  const handleNext = () => {
+  const handleNext = (): void => {
     if (currentStep === 0) {
       handleOrderDetailsNext();
     } else if (currentStep === 1) {
@@ -150,29 +159,30 @@ const MultiStepCreateOrder = () => {
     }
   };
 
-  // Back button handler
-  const handleBack = () => {
+  const handleBack = (): void => {
     setError('');
     setFormErrors({});
     setCurrentStep((prev) => prev - 1);
   };
 
-  // Save button handler (only for materials step)
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (currentStep === 1) {
-      await saveOrderLines(formData, orderId || formData.id, setError, setOpenSnackbar);
+      await saveOrderLines(
+        formData,
+        orderId || (formData as any).id,
+        setError,
+        setOpenSnackbar
+      );
     }
   };
 
-  // Final submission handler
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // El parámetro 'e' es opcional para que funcione también con OrderStepActions
+  const handleSubmit = async (e?: FormEvent<HTMLFormElement>): Promise<void> => {
+    if (e) e.preventDefault();
     if (currentStep !== steps.length - 1) return;
-    
     await submitOrder(formData, orderId, navigate, setError, setOpenSnackbar);
   };
 
-  // Loading and auth states
   if (authLoading) {
     return (
       <Container sx={{ mt: 4 }}>
@@ -185,12 +195,11 @@ const MultiStepCreateOrder = () => {
     return <Navigate to="/login" />;
   }
 
-  // Main render
   return (
     <>
       <StepperHeader activeStep={currentStep} steps={steps} />
       <Container sx={{ mt: 12, mb: 4 }}>
-        <form>
+        <form onSubmit={handleSubmit}>
           {renderStepContent(
             currentStep,
             formData,
@@ -201,22 +210,25 @@ const MultiStepCreateOrder = () => {
             isOrderLocked,
             user,
             refetchReferenceData,
-            dispatch
+            dispatch as React.Dispatch<any>
           )}
-          
-          <OrderStepActions 
+
+          <OrderStepActions
             currentStep={currentStep}
             totalSteps={steps.length}
             onBack={handleBack}
             onNext={handleNext}
             onSave={handleSave}
             onSubmit={handleSubmit}
-            disableSubmit={!formData.selectedInventories || formData.selectedInventories.length === 0}
+            disableSubmit={
+              !formData.selectedInventories ||
+              formData.selectedInventories.length === 0
+            }
             disableSave={inventoriesAndMaterials.loading}
           />
         </form>
       </Container>
-      
+
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}

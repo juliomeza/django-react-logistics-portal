@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  CircularProgress,
-} from '@mui/material';
+import { Container, Typography, Box, Button, CircularProgress } from '@mui/material';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import AuthContext from '../../auth/AuthContext';
 import apiProtected from '../../../services/api/secureApi';
@@ -13,18 +7,23 @@ import useReferenceData from '../hooks/useReferenceData';
 import useInventoriesAndMaterials from '../hooks/useInventoriesAndMaterials';
 import OrderSummary from '../components/OrderSummary/OrderSummary';
 
-/**
- * Component to view order details
- * Fetches and displays order information and associated materials
- */
-const OrderView = () => {
-  const { user } = useContext(AuthContext);
-  const { orderId } = useParams();
+interface OrderViewParams extends Record<string, string | undefined> {
+  orderId: string;
+}
+
+const OrderView: React.FC = () => {
+  const authContext = useContext(AuthContext);
+  if (!authContext) {
+    throw new Error("AuthContext is undefined");
+  }
+  const { user } = authContext;
+  const { orderId } = useParams<OrderViewParams>();
   const navigate = useNavigate();
-  const [order, setOrder] = useState(null);
-  const [orderLines, setOrderLines] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+
+  const [order, setOrder] = useState<any>(null);
+  const [orderLines, setOrderLines] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
 
   const referenceData = useReferenceData(user);
   const inventoriesAndMaterials = useInventoriesAndMaterials(user, order?.warehouse);
@@ -33,24 +32,24 @@ const OrderView = () => {
     const fetchOrderData = async () => {
       try {
         const orderResponse = await apiProtected.get(`orders/${orderId}/`);
-        console.log('Order data:', orderResponse.data); // Debug
+        console.log('Order data:', orderResponse.data);
         setOrder(orderResponse.data);
 
         const linesResponse = await apiProtected.get(`order-lines/order/${orderId}/`);
-        console.log('Order lines:', linesResponse.data); // Debug
+        console.log('Order lines:', linesResponse.data);
         setOrderLines(linesResponse.data);
       } catch (err) {
         setError('Failed to load order details or lines.');
-        console.error('Error fetching data:', err); // Debug
+        console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
       }
     };
-    if (user) fetchOrderData();
+    if (user && orderId) fetchOrderData();
   }, [orderId, user]);
 
   if (!user) return <Navigate to="/login" />;
-  
+
   if (loading || referenceData.loading || inventoriesAndMaterials.loading) {
     return (
       <Container sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -59,7 +58,7 @@ const OrderView = () => {
       </Container>
     );
   }
-  
+
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
