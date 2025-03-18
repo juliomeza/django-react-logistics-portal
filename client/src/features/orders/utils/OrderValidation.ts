@@ -1,8 +1,9 @@
+import { OrderFormData, OrderValidationErrors } from '../types';
 import { getFirstOrderStatus } from '../utils/apiUtils';
 
 // Valida los campos requeridos de los detalles de la orden
-export const validateOrderDetails = (formData: any): Record<string, boolean> => {
-  let newErrors: Record<string, boolean> = {};
+export const validateOrderDetails = (formData: OrderFormData): OrderValidationErrors => {
+  const newErrors: OrderValidationErrors = {};
   if (!formData.order_type) newErrors.order_type = true;
   if (!formData.order_class) newErrors.order_class = true;
   if (!formData.project) newErrors.project = true;
@@ -15,7 +16,7 @@ export const validateOrderDetails = (formData: any): Record<string, boolean> => 
 };
 
 // Prepara los datos de la orden para enviarlos a la API
-export const prepareOrderData = async (formData: any): Promise<any> => {
+export const prepareOrderData = async (formData: OrderFormData): Promise<OrderFormData> => {
   return {
     reference_number: formData.reference_number || null,
     order_type: formData.order_type,

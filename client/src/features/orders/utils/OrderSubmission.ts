@@ -1,6 +1,8 @@
 import apiProtected from '../../../services/api/secureApi';
 import { saveOrderLines, getSubmittedOrderStatus, handleApiError } from './apiUtils';
 import { prepareOrderData } from './OrderValidation';
+import { OrderFormData } from '../types';
+import React from 'react';
 
 interface DispatchAction {
   type: string;
@@ -9,10 +11,10 @@ interface DispatchAction {
 
 // Guarda los detalles de la orden (paso 1)
 export const saveOrderDetails = async (
-  formData: any,
-  orderId: any,
-  orderIdFromParams: any,
-  setOrderId: (id: any) => void,
+  formData: OrderFormData,
+  orderId: number | string | null,
+  orderIdFromParams: number | string | null,
+  setOrderId: React.Dispatch<React.SetStateAction<string | null>>, // ahora este tipo es usado
   dispatch: (action: DispatchAction) => void,
   setError: (msg: string) => void,
   setOpenSnackbar: (open: boolean) => void
@@ -27,7 +29,7 @@ export const saveOrderDetails = async (
       console.log('Order updated:', response.data);
     } else {
       response = await apiProtected.post('orders/', orderData);
-      setOrderId(response.data.id);
+      setOrderId(String(response.data.id)); // convierte a string
       dispatch({
         type: 'UPDATE_FIELD',
         field: 'lookup_code_order',
@@ -49,8 +51,8 @@ export const saveOrderDetails = async (
 
 // Envía la orden final
 export const submitOrder = async (
-  formData: any,
-  orderId: any,
+  formData: OrderFormData,
+  orderId: number | string | null,
   navigate: (path: string) => void,
   setError: (msg: string) => void,
   setOpenSnackbar: (open: boolean) => void
@@ -78,13 +80,18 @@ export const submitOrder = async (
 
 // Carga los datos de una orden existente
 export const loadOrderData = async (
-  orderIdFromParams: any,
+  orderIdFromParams: number | string | undefined, // se acepta undefined
   user: any,
   dispatch: (action: DispatchAction) => void,
-  setOrderId: (id: any) => void,
+  setOrderId: React.Dispatch<React.SetStateAction<string | null>>, // ahora este tipo es usado
   setError: (msg: string) => void,
   setOpenSnackbar: (open: boolean) => void
 ): Promise<boolean> => {
+  if (orderIdFromParams === undefined) {
+    setError('Order ID is missing.');
+    setOpenSnackbar(true);
+    return false;
+  }
   try {
     const orderResponse = await apiProtected.get(`orders/${orderIdFromParams}/`);
     const order = orderResponse.data;
@@ -119,7 +126,7 @@ export const loadOrderData = async (
       },
     });
 
-    setOrderId(orderIdFromParams);
+    setOrderId(String(orderIdFromParams)); // convierte a string
     return true;
   } catch (err: any) {
     setError('Failed to load order details or lines.');

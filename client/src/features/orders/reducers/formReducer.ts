@@ -1,3 +1,17 @@
+export interface OrderFormState {
+  lookup_code_order: string;
+  order_type: string;
+  order_class: string;
+  // ...otros campos...
+}
+
+export const initialState: OrderFormState = {
+  lookup_code_order: '',
+  order_type: '',
+  order_class: '',
+  // ...otros campos con sus valores iniciales...
+};
+
 export interface FormState {
   lookup_code_order: string;
   reference_number: string;

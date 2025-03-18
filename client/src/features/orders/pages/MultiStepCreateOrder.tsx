@@ -98,7 +98,7 @@ const MultiStepCreateOrder: React.FC = () => {
   useEffect(() => {
     if (orderIdFromParams && user) {
       loadOrderData(
-        orderIdFromParams,
+        orderIdFromParams ?? null, // convertir undefined a null
         user,
         dispatch as React.Dispatch<any>,
         setOrderId,
@@ -127,7 +127,7 @@ const MultiStepCreateOrder: React.FC = () => {
     const success = await saveOrderDetails(
       formData,
       orderId,
-      orderIdFromParams,
+      orderIdFromParams ?? null, // convertir undefined a null
       setOrderId,
       dispatch as React.Dispatch<any>,
       setError,
