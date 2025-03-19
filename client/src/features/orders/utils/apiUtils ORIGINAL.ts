@@ -1,11 +1,9 @@
 import apiProtected from '../../../services/api/secureApi';
-import { ApiError } from '../../../types/auth';
-import { OrderStatus } from '../../../types/orders';
 
 // Manejar errores de API (ajustado para mantener el comportamiento original)
-export const handleApiError = (error: ApiError, defaultMessage: string): string => {
+export const handleApiError = (error: any, defaultMessage: string): string => {
   const message: string = error.response?.data
-    ? Object.entries(error.response.data as Record<string, string>)
+    ? Object.entries(error.response.data)
         .map(([field, msg]) => `${field}: ${msg}`)
         .join('\n')
     : defaultMessage;
@@ -14,15 +12,8 @@ export const handleApiError = (error: ApiError, defaultMessage: string): string 
 
 // Guardar líneas de orden
 export const saveOrderLines = async (
-  formData: {
-    selectedInventories?: Array<{
-      id: number;
-      material: number;
-      orderQuantity?: number;
-    }>;
-    [key: string]: any;
-  },
-  orderId: number | string,
+  formData: any,
+  orderId: any,
   setError: (msg: string) => void,
   setOpenSnackbar: (open: boolean) => void
 ): Promise<boolean> => {
@@ -39,7 +30,7 @@ export const saveOrderLines = async (
     console.log('Selected inventories:', formData.selectedInventories);
 
     await apiProtected.delete(`order-lines/order/${orderId}/clear/`);
-    const orderLinePromises = formData.selectedInventories.map((item) => {
+    const orderLinePromises = formData.selectedInventories.map((item: any) => {
       const orderLineData = {
         order: orderId,
         material: item.material,
@@ -65,7 +56,7 @@ export const saveOrderLines = async (
 export const getFirstOrderStatus = async (): Promise<number> => {
   try {
     const response = await apiProtected.get('order-statuses/');
-    const createdStatus = response.data.find((status: OrderStatus) => status.status_name === 'Created');
+    const createdStatus = response.data.find((status: any) => status.status_name === 'Created');
     return createdStatus ? createdStatus.id : 1;
   } catch (error) {
     console.error('Error fetching statuses:', error);
@@ -77,7 +68,7 @@ export const getFirstOrderStatus = async (): Promise<number> => {
 export const getSubmittedOrderStatus = async (): Promise<number> => {
   try {
     const response = await apiProtected.get('order-statuses/');
-    const submittedStatus = response.data.find((status: OrderStatus) => status.status_name === 'Submitted');
+    const submittedStatus = response.data.find((status: any) => status.status_name === 'Submitted');
     return submittedStatus ? submittedStatus.id : 2;
   } catch (error) {
     console.error('Error fetching submitted status:', error);
