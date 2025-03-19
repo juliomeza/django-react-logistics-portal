@@ -1,6 +1,6 @@
 import apiProtected from '../../../services/api/secureApi';
 import { saveOrderLines, getSubmittedOrderStatus, handleApiError } from './apiUtils';
-import { prepareOrderData } from './OrderValidation';
+import { prepareOrderData, PreparedOrderData } from './OrderValidation';
 import { Order, OrderFormData } from '../../../types/orders';
 import { AxiosResponse } from 'axios';
 import React from 'react';
@@ -47,8 +47,8 @@ export const saveOrderDetails = async (
   setOpenSnackbar: (open: boolean) => void
 ): Promise<boolean> => {
   try {
-    // Asegurar que formData es compatible con el tipo esperado por prepareOrderData
-    const orderData = await prepareOrderData(formData as any);
+    // Usar la interfaz específica en lugar de any
+    const orderData: PreparedOrderData = await prepareOrderData(formData);
     
     let response: AxiosResponse<Order>;
     const effectiveOrderId = orderId || orderIdFromParams;
@@ -128,11 +128,21 @@ export const submitOrder = async (
 };
 
 /**
+ * Interfaz para material en respuesta de línea de orden
+ */
+export interface MaterialResponse {
+  id: number;
+  name: string;
+  lookup_code: string;
+  [key: string]: unknown;
+}
+
+/**
  * Interfaz para líneas de orden recuperadas de la API
  */
 export interface OrderLineResponse {
   id: number;
-  material: number | Record<string, unknown>;
+  material: number | MaterialResponse;
   license_plate: number | null;
   quantity: number;
   [key: string]: unknown;
@@ -189,7 +199,7 @@ export const loadOrderData = async (
         selectedInventories: linesResponse.data.map((line: OrderLineResponse) => ({
           id: line.id,
           material: typeof line.material === 'object' && line.material !== null 
-            ? (line.material as Record<string, any>).id 
+            ? line.material.id 
             : line.material,
           license_plate: line.license_plate,
           orderQuantity: line.quantity,

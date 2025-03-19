@@ -9,6 +9,25 @@ interface WithId {
 }
 
 /**
+ * Interfaz para los datos de orden preparados para la API
+ */
+export interface PreparedOrderData {
+  reference_number: string | null;
+  order_type: string | number | null;
+  order_class: string | number | null;
+  project: string | number | null;
+  warehouse: string | number | null;
+  contact: string | number | null;
+  shipping_address: string | number | null;
+  billing_address: string | number | null;
+  carrier: string | number | null;
+  service_type: string | number | null;
+  expected_delivery_date: string | null;
+  notes: string;
+  order_status: string | number | null;
+}
+
+/**
  * Valida los campos requeridos de los detalles de la orden
  * @param formData Los datos del formulario de la orden a validar
  * @returns Un objeto con los errores de validación, donde las claves son los nombres de los campos con errores
@@ -44,7 +63,7 @@ function extractId(value: unknown): string | number | null {
  * @param formData Los datos del formulario de la orden
  * @returns Los datos de la orden formateados para la API
  */
-export const prepareOrderData = async (formData: OrderFormData): Promise<Record<string, any>> => {
+export const prepareOrderData = async (formData: OrderFormData): Promise<PreparedOrderData> => {
   const orderStatus = formData.order_status || await getFirstOrderStatus();
   
   return {

@@ -53,11 +53,11 @@ export interface EnrichedInventoryOption extends InventoryItem {
  * @returns Elementos seleccionados enriquecidos con información adicional
  */
 export const enrichSelectedItems = (
-  selectedInventories: SelectedInventoryItem[],
-  inventories: InventoryItem[],
-  materials: Material[]
+  selectedInventories: SelectedInventoryItem[] | null | undefined,
+  inventories: InventoryItem[] | null | undefined,
+  materials: Material[] | null | undefined
 ): SelectedInventoryItem[] => {
-  if (!selectedInventories || inventories.length === 0 || materials.length === 0) {
+  if (!selectedInventories || !inventories || !materials || inventories.length === 0 || materials.length === 0) {
     return selectedInventories || [];
   }
   
@@ -105,9 +105,13 @@ export const enrichSelectedItems = (
  * @returns Opciones de inventario enriquecidas para componentes de selección
  */
 export const createInventoryOptions = (
-  inventories: InventoryItem[],
-  materials: Material[]
+  inventories: InventoryItem[] | null | undefined,
+  materials: Material[] | null | undefined
 ): EnrichedInventoryOption[] => {
+  if (!inventories || !materials) {
+    return [];
+  }
+
   return inventories.map((item) => {
     const material = materials.find((m) => m.id === item.material);
     const materialName = material ? material.name : 'Unknown Material';
@@ -130,9 +134,13 @@ export const createInventoryOptions = (
  * @returns Cantidad validada dentro de los límites permitidos
  */
 export const validateQuantity = (
-  item: SelectedInventoryItem, 
+  item: SelectedInventoryItem | null | undefined, 
   newQuantity: number
 ): number => {
+  if (!item) {
+    return Math.max(1, newQuantity);
+  }
+
   // Solo se aplica la validación máxima si availableQty es un número positivo válido
   if (typeof item.availableQty === 'number' && !isNaN(item.availableQty) && item.availableQty > 0) {
     return Math.min(Math.max(1, newQuantity), item.availableQty);
@@ -147,7 +155,8 @@ export const validateQuantity = (
  * @param value Valor a formatear
  * @returns Cadena formateada con dos decimales
  */
-export const formatQuantity = (value: number | string | undefined): string => {
+export const formatQuantity = (value: number | string | undefined | null): string => {
+  if (value === null || value === undefined) return '0.00';
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   return (typeof numValue === 'number' && !isNaN(numValue))
     ? numValue.toFixed(2)
