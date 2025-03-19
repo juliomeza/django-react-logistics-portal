@@ -1,8 +1,5 @@
 // Utility functions for material selection and manipulation
 
-/**
- * Enriquece los elementos seleccionados con información adicional de materiales e inventario
- */
 export const enrichSelectedItems = (
   selectedInventories: any[],
   inventories: any[],
@@ -49,9 +46,6 @@ export const enrichSelectedItems = (
   });
 };
 
-/**
- * Crea opciones de inventario para su uso en componentes de selección
- */
 export const createInventoryOptions = (
   inventories: any[],
   materials: any[]
@@ -71,9 +65,6 @@ export const createInventoryOptions = (
   });
 };
 
-/**
- * Valida una cantidad para asegurar que está dentro de los límites permitidos
- */
 export const validateQuantity = (item: any, newQuantity: number): number => {
   // Solo se aplica la validación máxima si availableQty es un número positivo válido
   if (typeof item.availableQty === 'number' && !isNaN(item.availableQty) && item.availableQty > 0) {
@@ -84,9 +75,6 @@ export const validateQuantity = (item: any, newQuantity: number): number => {
   }
 };
 
-/**
- * Formatea un valor como una cadena con dos decimales
- */
 export const formatQuantity = (value: any): string => {
   return (typeof value === 'number' && !isNaN(value))
     ? value.toFixed(2)
