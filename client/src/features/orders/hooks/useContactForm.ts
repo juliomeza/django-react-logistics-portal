@@ -1,8 +1,13 @@
 import { useState, ChangeEvent } from 'react';
-import { buildContactOptions, createCustomFilterOptions } from '../utils/DeliveryInfoUtils';
+import { 
+  buildContactOptions, 
+  createCustomFilterOptions, 
+  type ContactOption as UtilsContactOption, 
+  type AddressDisplay 
+} from '../utils/DeliveryInfoUtils';
 import { createContact, assignContactToProject } from '../utils/contactUtils';
 
-interface Address {
+export interface Address {
   address_line_1: string;
   address_line_2: string;
   city: string;
@@ -11,6 +16,10 @@ interface Address {
   country: string;
   entity_type: string;
   address_type: string;
+}
+
+export interface AddressData extends Address {
+  id: string | number;
 }
 
 export interface ContactState {
@@ -26,7 +35,7 @@ export interface ContactState {
   billing_address: Address;
 }
 
-const initialContactState: ContactState = {
+export const initialContactState: ContactState = {
   company_name: '',
   contact_name: '',
   attention: '',
@@ -57,19 +66,72 @@ const initialContactState: ContactState = {
   },
 };
 
-interface UseContactFormProps {
-  formData: any;
-  handleChange: (event: { target: { name: string; value: any } }) => void;
-  contacts?: any[];
-  addresses?: any[];
-  projects?: any[];
+// Extiende el tipo importado para incluir la propiedad opcional "label"
+export interface ExtendedContactOption extends UtilsContactOption {
+  label?: string;
+}
+
+export interface ContactFormData {
+  contact?: string | number;
+  shipping_address?: string | number;
+  billing_address?: string | number;
+  project?: string | number;
+  [key: string]: any;
+}
+
+export interface ContactFormChangeEvent {
+  target: {
+    name: string;
+    value: any;
+  };
+}
+
+export interface Project {
+  id: string | number;
+  // Otros campos si son necesarios
+}
+
+// Extendemos Project para que se ajuste al tipo que espera assignContactToProject
+export interface ProjectWithContacts extends Project {
+  [key: string]: any;
+}
+
+export interface CreateContactResponse {
+  shippingId: string | number;
+  billingId: string | number;
+  newContactId: string | number;
+}
+
+export interface UseContactFormProps {
+  formData: ContactFormData;
+  handleChange: (event: ContactFormChangeEvent) => void;
+  contacts?: ExtendedContactOption[];
+  addresses?: AddressData[];
+  projects?: Project[];
   refetchReferenceData: () => Promise<any>;
 }
 
-interface CreateContactResponse {
-  shippingId: any;
-  billingId: any;
-  newContactId: any;
+export interface UseContactFormReturn {
+  openModal: boolean;
+  openWarningDialog: boolean;
+  newContact: ContactState;
+  sameBillingAddress: boolean;
+  modalErrors: { [key: string]: boolean | string };
+  contactOptions: ExtendedContactOption[];
+  customFilterOptions: any; // Estructura interna desconocida
+  selectedContact: ExtendedContactOption | null;
+  selectedShippingAddress: AddressData | null;
+  selectedBillingAddress: AddressData | null;
+  handleContactChange: (event: unknown, selectedOption: ExtendedContactOption | null) => void;
+  handleNewContactChange: (
+    e: ChangeEvent<HTMLInputElement>,
+    addressType?: 'shipping_address' | 'billing_address' | null
+  ) => void;
+  handleSameAddressChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  handleOpenModal: () => void;
+  handleSaveNewContact: () => Promise<void>;
+  setOpenModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenWarningDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const useContactForm = ({
@@ -79,35 +141,36 @@ export const useContactForm = ({
   addresses = [],
   projects = [],
   refetchReferenceData,
-}: UseContactFormProps) => {
+}: UseContactFormProps): UseContactFormReturn => {
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [openWarningDialog, setOpenWarningDialog] = useState<boolean>(false);
   const [newContact, setNewContact] = useState<ContactState>(initialContactState);
   const [sameBillingAddress, setSameBillingAddress] = useState<boolean>(true);
   const [modalErrors, setModalErrors] = useState<{ [key: string]: boolean | string }>({});
 
-  const contactOptions = buildContactOptions(contacts, addresses);
+  // Se fuerza que buildContactOptions retorne ExtendedContactOption[] y se castea addresses a AddressDisplay[]
+  const contactOptions = buildContactOptions(contacts, addresses as unknown as AddressDisplay[]) as ExtendedContactOption[];
   const customFilterOptions = createCustomFilterOptions();
 
-  const selectedContact = formData.contact
-    ? contactOptions.find((c: any) => c.id === formData.contact) || null
+  const selectedContact: ExtendedContactOption | null = formData.contact
+    ? contactOptions.find((c) => c.id === formData.contact) || null
     : null;
 
-  const selectedShippingAddress = formData.shipping_address
-    ? addresses.find((a: any) => a.id === formData.shipping_address)
+  const selectedShippingAddress: AddressData | null = formData.shipping_address
+    ? addresses.find((a) => a.id === formData.shipping_address) || null
     : null;
 
-  const selectedBillingAddress = formData.billing_address
-    ? addresses.find((a: any) => a.id === formData.billing_address)
+  const selectedBillingAddress: AddressData | null = formData.billing_address
+    ? addresses.find((a) => a.id === formData.billing_address) || null
     : null;
 
-  const updateFormData = (contactId: any, shippingId: any, billingId: any) => {
+  const updateFormData = (contactId: string | number, shippingId: string | number, billingId: string | number): void => {
     handleChange({ target: { name: 'contact', value: contactId } });
     handleChange({ target: { name: 'shipping_address', value: shippingId } });
     handleChange({ target: { name: 'billing_address', value: billingId } });
   };
 
-  const handleContactChange = (event: any, selectedOption: any) => {
+  const handleContactChange = (event: unknown, selectedOption: ExtendedContactOption | null): void => {
     if (selectedOption?.isAddOption) {
       handleOpenModal();
       return;
@@ -120,17 +183,23 @@ export const useContactForm = ({
 
     updateFormData(selectedOption.id, '', '');
 
-    if (selectedOption.addresses?.length > 0) {
-      updateContactAddresses(selectedOption.addresses);
+    if (selectedOption.addresses && selectedOption.addresses.length > 0) {
+      updateContactAddresses(
+        selectedOption.addresses.map(addr =>
+          typeof addr === 'object'
+            ? (addr as { id: string | number; address_type: string }).id
+            : addr
+        )
+      );
     }
   };
 
-  const updateContactAddresses = (addressIds: any[]) => {
-    const contactAddressList = addresses.filter((addr: any) =>
+  const updateContactAddresses = (addressIds: Array<string | number>): void => {
+    const contactAddressList = addresses.filter((addr) =>
       addressIds.includes(addr.id)
     );
-    const shippingAddr = contactAddressList.find((addr: any) => addr.address_type === 'shipping');
-    const billingAddr = contactAddressList.find((addr: any) => addr.address_type === 'billing');
+    const shippingAddr = contactAddressList.find((addr) => addr.address_type === 'shipping');
+    const billingAddr = contactAddressList.find((addr) => addr.address_type === 'billing');
     
     if (shippingAddr) {
       handleChange({ target: { name: 'shipping_address', value: shippingAddr.id } });
@@ -141,7 +210,10 @@ export const useContactForm = ({
     }
   };
 
-  const handleNewContactChange = (e: ChangeEvent<HTMLInputElement>, addressType: 'shipping_address' | 'billing_address' | null = null) => {
+  const handleNewContactChange = (
+    e: ChangeEvent<HTMLInputElement>,
+    addressType: 'shipping_address' | 'billing_address' | null = null
+  ): void => {
     const { name, value } = e.target;
     
     if (addressType) {
@@ -159,14 +231,14 @@ export const useContactForm = ({
     } else {
       setNewContact((prev) => ({
         ...prev,
-        [name as keyof ContactState]: value,
+        [name]: value,
       }));
     }
     
     setModalErrors((prev) => ({ ...prev, [name]: false }));
   };
 
-  const handleSameAddressChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleSameAddressChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const checked = e.target.checked;
     setSameBillingAddress(checked);
     
@@ -188,7 +260,7 @@ export const useContactForm = ({
     }
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     const errors: { [key: string]: boolean | string } = {};
     
     if (!newContact.company_name) errors.company_name = true;
@@ -205,7 +277,7 @@ export const useContactForm = ({
     return Object.keys(errors).length === 0;
   };
 
-  const validateAddress = (address: Address, prefix: string, errors: { [key: string]: boolean | string }) => {
+  const validateAddress = (address: Address, prefix: string, errors: { [key: string]: boolean | string }): void => {
     if (!address.address_line_1) errors[`${prefix}_address_line_1`] = true;
     if (!address.city) errors[`${prefix}_city`] = true;
     if (!address.state) errors[`${prefix}_state`] = true;
@@ -213,7 +285,7 @@ export const useContactForm = ({
     if (!address.country) errors[`${prefix}_country`] = true;
   };
 
-  const handleOpenModal = () => {
+  const handleOpenModal = (): void => {
     if (!formData.project) {
       setOpenWarningDialog(true);
       return;
@@ -221,7 +293,7 @@ export const useContactForm = ({
     setOpenModal(true);
   };
 
-  const handleSaveNewContact = async () => {
+  const handleSaveNewContact = async (): Promise<void> => {
     if (!validateForm()) {
       console.log('Validation failed');
       return;
@@ -231,7 +303,7 @@ export const useContactForm = ({
       const { shippingId, billingId, newContactId } = (await createContact(newContact, sameBillingAddress)) as CreateContactResponse;
 
       try {
-        await assignContactToProject(newContactId, formData.project, projects);
+        await assignContactToProject(newContactId, formData.project!, projects as ProjectWithContacts[]);
       } catch (error) {
         console.warn('Error al asignar contacto al proyecto:', error);
         setModalErrors({ general: 'Contact created, but could not be assigned to project' });
@@ -248,9 +320,10 @@ export const useContactForm = ({
       console.error('Error in save process:', error);
       
       if (error.response) {
-        const errorMsg = error.response.data?.detail || 
-                        JSON.stringify(error.response.data) || 
-                        'Unknown error';
+        const errorMsg =
+          error.response.data?.detail ||
+          JSON.stringify(error.response.data) ||
+          'Unknown error';
         console.error('API error details:', error.response);
         setModalErrors({ general: `Failed to save: ${errorMsg}` });
       } else {
