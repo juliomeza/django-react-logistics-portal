@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react';
 import apiProtected from '../../../services/api/secureApi';
+import { Inventory } from '../../../types/inventory';
+import { Material } from '../../../types/materials';
+
+// Suponiendo que la API retorna inventarios con la propiedad "warehouse" en lugar de "warehouse_id"
+type InventoryAPI = Omit<Inventory, 'warehouse_id'> & { warehouse: number };
 
 interface UseInventoriesAndMaterialsReturn {
-  inventories: any[];
-  materials: any[];
+  inventories: InventoryAPI[];
+  materials: Material[];
   loading: boolean;
   error: string;
 }
 
 const useInventoriesAndMaterials = (user: any, warehouse: string | number): UseInventoriesAndMaterialsReturn => {
-  const [inventories, setInventories] = useState<any[]>([]);
-  const [materials, setMaterials] = useState<any[]>([]);
+  const [inventories, setInventories] = useState<InventoryAPI[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
@@ -24,9 +29,11 @@ const useInventoriesAndMaterials = (user: any, warehouse: string | number): UseI
           apiProtected.get('materials/'),
         ]);
         setInventories(
-          invRes.data.filter((inv: any) => inv.warehouse === parseInt(String(warehouse), 10))
+          (invRes.data as InventoryAPI[]).filter(
+            (inv: InventoryAPI) => inv.warehouse === parseInt(String(warehouse), 10)
+          )
         );
-        setMaterials(matRes.data);
+        setMaterials(matRes.data as Material[]);
       } catch (err) {
         setError('Failed to load inventories');
       } finally {
