@@ -1,6 +1,39 @@
 import React from 'react';
 import { createFilterOptions } from '@mui/material/Autocomplete';
 
+/**
+ * Interfaz para direcciones usadas en componentes
+ */
+export interface AddressDisplay {
+  address_line_1: string;
+  address_line_2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  id: number | string;
+  address_type?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Interfaz para contactos
+ */
+export interface ContactOption {
+  id: number | string;
+  company_name?: string;
+  contact_name?: string;
+  addresses?: (number | string)[];
+  label?: string;
+  isAddOption?: boolean;
+  [key: string]: unknown;
+}
+
+/**
+ * Formatea una fecha para mostrarla en un campo de entrada de tipo date
+ * @param dateString Fecha a formatear
+ * @returns Fecha formateada como YYYY-MM-DD o cadena vacía si es inválida
+ */
 export const formatDateForInput = (dateString: string | undefined): string => {
   if (!dateString) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
@@ -13,7 +46,12 @@ export const formatDateForInput = (dateString: string | undefined): string => {
   }
 };
 
-export const formatAddress = (address: any): React.ReactNode => {
+/**
+ * Formatea una dirección para mostrarla
+ * @param address Objeto de dirección a formatear
+ * @returns Elemento React con la dirección formateada
+ */
+export const formatAddress = (address: AddressDisplay | null | undefined): React.ReactNode => {
   if (!address) return 'No address selected';
   return (
     <>
@@ -32,13 +70,24 @@ export const formatAddress = (address: any): React.ReactNode => {
   );
 };
 
-export const buildContactOptions = (contacts: any[], addresses: any[]): any[] => {
+/**
+ * Construye opciones de contacto para componentes de selección
+ * @param contacts Lista de contactos
+ * @param addresses Lista de direcciones
+ * @returns Lista de opciones de contacto con información de dirección
+ */
+export const buildContactOptions = (
+  contacts: ContactOption[], 
+  addresses: AddressDisplay[]
+): ContactOption[] => {
   return contacts.map((contact) => {
     const shippingAddress = addresses.find(
-      (addr) => contact.addresses?.includes(addr.id) && addr.address_type === 'shipping'
+      (addr) => 
+        contact.addresses?.includes(addr.id) && 
+        addr.address_type === 'shipping'
     );
     const city = shippingAddress ? shippingAddress.city : '';
-    const displayName = contact.company_name || contact.contact_name;
+    const displayName = contact.company_name || contact.contact_name || 'Unnamed Contact';
     return { 
       ...contact, 
       label: city ? `${displayName} - ${city}` : displayName,
@@ -47,21 +96,36 @@ export const buildContactOptions = (contacts: any[], addresses: any[]): any[] =>
   });
 };
 
+/**
+ * Tipo para opciones filtradas con posible opción de añadir
+ */
+export interface FilteredOption extends ContactOption {
+  inputValue?: string;
+  isAddOption?: boolean;
+}
+
+/**
+ * Crea opciones de filtrado personalizadas para autocomplete
+ * @returns Función de filtrado personalizada
+ */
 export const createCustomFilterOptions = () => {
-  const filterOptions = createFilterOptions({
+  const filterOptions = createFilterOptions<FilteredOption>({
     matchFrom: 'any',
-    stringify: (option: any) => option.label || '',
+    stringify: (option) => option.label || '',
   });
 
-  return (options: any[], params: any): any[] => {
+  return (options: FilteredOption[], params: any): FilteredOption[] => {
     const filtered = filterOptions(options, params);
     
     // Siempre agregar la opción "Add New Contact" al final
-    filtered.push({
+    const addOption: FilteredOption = {
+      id: 'new',
       inputValue: params.inputValue,
       label: 'Add New Contact',
       isAddOption: true,
-    });
+    };
+    
+    filtered.push(addOption);
     
     return filtered;
   };
