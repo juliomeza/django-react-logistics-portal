@@ -1,4 +1,5 @@
 // formReducer.ts
+import { OrderFormData } from '../../../types/orders';
 
 /**
  * Estado del formulario de orden
@@ -31,7 +32,6 @@ export interface FormState {
     id: number;
     material: number;
     orderQuantity?: number;
-    // Otros campos que pueda necesitar tu aplicación
   }>;
 }
 
@@ -56,10 +56,20 @@ export const initialFormState: FormState = {
 };
 
 /**
+ * Tipo para las acciones de UPDATE_FIELD que asegura que el campo sea una clave
+ * válida de FormState y el valor tenga el tipo correcto
+ */
+type UpdateFieldAction<K extends keyof FormState> = {
+  type: 'UPDATE_FIELD';
+  field: K;
+  value: FormState[K];
+};
+
+/**
  * Acciones posibles para el reducer del formulario
  */
 export type FormAction =
-  | { type: 'UPDATE_FIELD'; field: keyof FormState; value: any }
+  | { type: 'UPDATE_FIELD'; field: keyof FormState; value: FormState[keyof FormState] }
   | { type: 'SET_INVENTORIES'; inventories: FormState['selectedInventories'] }
   | { type: 'SET_FORM_DATA'; data: Partial<FormState> };
 
@@ -87,17 +97,37 @@ export const formReducer = (
 
 /**
  * Para compatibilidad con código existente, mantenemos OrderFormState
+ * Ahora extiende la interfaz de OrderFormData para mejor compatibilidad
  */
-export interface OrderFormState {
-  lookup_code_order: string;
-  order_type: string;
-  order_class: string;
-  // Puede contener otros campos según sea necesario
+export interface OrderFormState extends Pick<OrderFormData, 'lookup_code_order' | 'order_type' | 'order_class'> {
+  // Campos adicionales específicos para este componente pueden agregarse aquí
 }
 
+/**
+ * Estado inicial para compatibilidad
+ */
 export const initialState: OrderFormState = {
   lookup_code_order: '',
   order_type: '',
   order_class: '',
-  // Otros campos con sus valores iniciales
 };
+
+/**
+ * Creadores de acciones tipadas (action creators)
+ * Facilitan la creación de acciones con tipado seguro
+ */
+export const updateField = <K extends keyof FormState>(field: K, value: FormState[K]): UpdateFieldAction<K> => ({
+  type: 'UPDATE_FIELD',
+  field,
+  value,
+});
+
+export const setInventories = (inventories: FormState['selectedInventories']): FormAction => ({
+  type: 'SET_INVENTORIES',
+  inventories,
+});
+
+export const setFormData = (data: Partial<FormState>): FormAction => ({
+  type: 'SET_FORM_DATA',
+  data,
+});
