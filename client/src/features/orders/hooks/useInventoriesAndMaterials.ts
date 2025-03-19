@@ -12,7 +12,13 @@ interface ApiInventory {
   license_plate: string;
   lot: string;
   vendor_lot: string;
-  [key: string]: any; // Para otras propiedades que puedan existir
+  // Propiedades opcionales específicas en lugar de [key: string]: any
+  created_at?: string;
+  updated_at?: string;
+  date_received?: string;
+  expiration_date?: string;
+  status?: number;
+  notes?: string;
 }
 
 interface ApiMaterial {
@@ -26,7 +32,13 @@ interface ApiMaterial {
   uom: number;
   is_serialized: boolean;
   current_price?: number;
-  [key: string]: any; // Para otras propiedades que puedan existir
+  // Propiedades opcionales específicas en lugar de [key: string]: any
+  created_at?: string;
+  updated_at?: string;
+  vendor?: number;
+  category?: number;
+  revision?: string;
+  notes?: string;
 }
 
 interface UseInventoriesAndMaterialsReturn {
@@ -43,7 +55,7 @@ interface UseInventoriesAndMaterialsReturn {
  */
 const useInventoriesAndMaterials = (
   user: AuthUserData | null, 
-  warehouse: string | number
+  warehouse: string | number | null
 ): UseInventoriesAndMaterialsReturn => {
   const [inventories, setInventories] = useState<ApiInventory[]>([]);
   const [materials, setMaterials] = useState<ApiMaterial[]>([]);
@@ -61,12 +73,26 @@ const useInventoriesAndMaterials = (
           apiProtected.get<ApiMaterial[]>('materials/'),
         ]);
         
-        setInventories(
-          invRes.data.filter((inv) => inv.warehouse === parseInt(String(warehouse), 10))
-        );
-        setMaterials(matRes.data);
+        // Convertir el warehouse a número de manera segura
+        const warehouseId = typeof warehouse === 'string' 
+          ? parseInt(warehouse, 10) 
+          : warehouse;
+        
+        // Filtrar solo si warehouseId es un número válido
+        if (!isNaN(warehouseId)) {
+          setInventories(
+            invRes.data.filter((inv) => inv.warehouse === warehouseId)
+          );
+          setMaterials(matRes.data);
+        } else {
+          setError('Invalid warehouse ID');
+        }
       } catch (err) {
-        setError('Failed to load inventories');
+        // Manejo de errores más específico
+        const errorMessage = err instanceof Error 
+          ? err.message 
+          : 'Failed to load inventories and materials';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
