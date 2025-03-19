@@ -1,24 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import apiProtected from '../../../services/api/secureApi';
-import { AuthUserData } from '../../../types/auth';
-import { OrderType, OrderClass } from '../../../types/orders';
-import { Project } from '../../../types/enterprise';
-import { Warehouse, Contact, Address, Carrier, CarrierService } from '../../../types/logistics';
-
-// Interface que describe la estructura real de los proyectos como vienen de la API
-interface ApiProject extends Omit<Project, 'users'> {
-  users: number[]; // En la API, los users vienen como un array de IDs (números)
-}
 
 interface ReferenceData {
-  orderTypes: OrderType[];
-  orderClasses: OrderClass[];
-  projects: ApiProject[];
-  warehouses: Warehouse[];
-  contacts: Contact[];
-  addresses: Address[];
-  carriers: Carrier[];
-  carrierServices: CarrierService[];
+  orderTypes: any[];
+  orderClasses: any[];
+  projects: any[];
+  warehouses: any[];
+  contacts: any[];
+  addresses: any[];
+  carriers: any[];
+  carrierServices: any[];
 }
 
 interface UseReferenceDataReturn {
@@ -28,11 +19,12 @@ interface UseReferenceDataReturn {
   refetchReferenceData: () => Promise<void>;
 }
 
-/**
- * Hook para cargar datos de referencia necesarios para formularios de órdenes
- * @param user Usuario autenticado actual
- */
-const useReferenceData = (user: AuthUserData | null): UseReferenceDataReturn => {
+interface User {
+  id: string | number;
+  [key: string]: any;
+}
+
+const useReferenceData = (user: User | null): UseReferenceDataReturn => {
   const [data, setData] = useState<ReferenceData>({
     orderTypes: [],
     orderClasses: [],
@@ -47,8 +39,6 @@ const useReferenceData = (user: AuthUserData | null): UseReferenceDataReturn => 
   const [error, setError] = useState<string>('');
 
   const fetchData = useCallback(async () => {
-    if (!user) return;
-    
     try {
       setLoading(true);
       const [
@@ -61,23 +51,21 @@ const useReferenceData = (user: AuthUserData | null): UseReferenceDataReturn => 
         carriersRes,
         carrierServicesRes,
       ] = await Promise.all([
-        apiProtected.get<OrderType[]>('order-types/'),
-        apiProtected.get<OrderClass[]>('order-classes/'),
-        apiProtected.get<ApiProject[]>('projects/'),
-        apiProtected.get<Warehouse[]>('warehouses/'),
-        apiProtected.get<Contact[]>('contacts/'),
-        apiProtected.get<Address[]>('addresses/'),
-        apiProtected.get<Carrier[]>('carriers/'),
-        apiProtected.get<CarrierService[]>('carrier-services/'),
+        apiProtected.get('order-types/'),
+        apiProtected.get('order-classes/'),
+        apiProtected.get('projects/'),
+        apiProtected.get('warehouses/'),
+        apiProtected.get('contacts/'),
+        apiProtected.get('addresses/'),
+        apiProtected.get('carriers/'),
+        apiProtected.get('carrier-services/'),
       ]);
-      
       const userId = parseInt(String(user?.id || 0), 10);
-      
       setData({
         orderTypes: orderTypesRes.data,
         orderClasses: orderClassesRes.data,
         projects: projectsRes.data.filter(
-          (proj) => Array.isArray(proj.users) && proj.users.includes(userId)
+          (proj: any) => Array.isArray(proj.users) && proj.users.includes(userId)
         ),
         warehouses: warehousesRes.data,
         contacts: contactsRes.data,
@@ -92,24 +80,20 @@ const useReferenceData = (user: AuthUserData | null): UseReferenceDataReturn => 
     }
   }, [user]);
 
-  const refetchReferenceData = async (): Promise<void> => {
-    if (!user) return;
-    
+  const refetchReferenceData = async () => {
     try {
       const [contactsRes, addressesRes, projectsRes] = await Promise.all([
-        apiProtected.get<Contact[]>('contacts/'),
-        apiProtected.get<Address[]>('addresses/'),
-        apiProtected.get<ApiProject[]>('projects/'),
+        apiProtected.get('contacts/'),
+        apiProtected.get('addresses/'),
+        apiProtected.get('projects/'),
       ]);
-      
       const userId = parseInt(String(user?.id || 0), 10);
-      
       setData((prev) => ({
         ...prev,
         contacts: contactsRes.data,
         addresses: addressesRes.data,
         projects: projectsRes.data.filter(
-          (proj) => Array.isArray(proj.users) && proj.users.includes(userId)
+          (proj: any) => Array.isArray(proj.users) && proj.users.includes(userId)
         ),
       }));
     } catch (err) {
