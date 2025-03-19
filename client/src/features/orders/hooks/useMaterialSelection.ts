@@ -166,11 +166,12 @@ export const useMaterialSelection = ({
     const displayedAvailableQty = getAvailableQuantity(material, lot, lp);
     const validatedOrderQty = validateOrderQuantity(quantity, displayedAvailableQty);
     
+    // Se mantiene el formato original de ID y propiedades para evitar problemas con las búsquedas posteriores
     const newItem = {
       id: lp ? lp.id : (lot ? lot.id : material.id),
       material: material.material,
       materialCode: displayValues.code,
-      materialName: displayValues.name,
+      materialName: displayValues.name,  // Crucial para mostrar el nombre en la revisión
       lot: displayValues.lot,
       license_plate: displayValues.licensePlate,
       licensePlate: displayValues.licensePlate,
@@ -184,9 +185,12 @@ export const useMaterialSelection = ({
     const updatedItems = [...selectedItems, newItem];
     setSelectedItems(updatedItems);
     
-    // Actualizar el formData - VERSIÓN HIBRIDA
-    // Si formData.selectedInventories es un array, actualizamos directamente
-    // Si no, lo enviamos como propiedad
+    // TODO: REFACTORIZACIÓN PENDIENTE
+    // Este enfoque híbrido es una solución temporal para manejar inconsistencias en cómo 
+    // diferentes partes de la aplicación esperan recibir los datos.
+    // En una refactorización futura, estandarizar este comportamiento para que sea consistente.
+    
+    // Detectamos si el componente padre espera recibir directamente el array o un objeto con la propiedad
     const isDirectUpdate = typeof setFormData === 'function' && 
                            (!formData.hasOwnProperty('selectedInventories') || 
                             Array.isArray(formData.selectedInventories));
@@ -202,10 +206,10 @@ export const useMaterialSelection = ({
       });
     }
     
-    // Asegurarnos de que todo se procese correctamente antes de resetear
+    // Añadimos un pequeño retraso para asegurar que la actualización se procese antes de resetear
     setTimeout(() => {
       resetSelections();
-    }, 50); // Un pequeño retraso para asegurar que la actualización se procese antes
+    }, 50);
   };
 
   // Aplicamos la misma lógica híbrida a los demás métodos
@@ -224,7 +228,8 @@ export const useMaterialSelection = ({
     
     setSelectedItems(newSelectedItems);
     
-    // Actualizar formData - VERSIÓN HÍBRIDA
+    // TODO: REFACTORIZACIÓN PENDIENTE
+    // Actualizar formData - VERSIÓN HÍBRIDA (ver comentario en handleAddItem)
     const isDirectUpdate = typeof setFormData === 'function' && 
                            (!formData.hasOwnProperty('selectedInventories') || 
                             Array.isArray(formData.selectedInventories));
@@ -248,7 +253,8 @@ export const useMaterialSelection = ({
     
     setSelectedItems(newSelectedItems);
     
-    // Actualizar formData - VERSIÓN HÍBRIDA
+    // TODO: REFACTORIZACIÓN PENDIENTE
+    // Actualizar formData - VERSIÓN HÍBRIDA (ver comentario en handleAddItem)
     const isDirectUpdate = typeof setFormData === 'function' && 
                            (!formData.hasOwnProperty('selectedInventories') || 
                             Array.isArray(formData.selectedInventories));
@@ -268,7 +274,8 @@ export const useMaterialSelection = ({
     
     setSelectedItems(updatedItems);
     
-    // Actualizar formData - VERSIÓN HÍBRIDA
+    // TODO: REFACTORIZACIÓN PENDIENTE
+    // Actualizar formData - VERSIÓN HÍBRIDA (ver comentario en handleAddItem)
     const isDirectUpdate = typeof setFormData === 'function' && 
                            (!formData.hasOwnProperty('selectedInventories') || 
                             Array.isArray(formData.selectedInventories));
