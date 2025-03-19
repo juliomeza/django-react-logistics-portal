@@ -1,38 +1,21 @@
 import { useState, useEffect, useMemo } from 'react';
-import { 
-  enrichSelectedItems, 
-  createInventoryOptions, 
-  EnrichedInventoryOption
-} from '../utils/MaterialUtils';
-import { 
-  getDisplayValues, 
-  getAvailableQuantity, 
-  validateOrderQuantity,
-  Material as SelectionMaterial,
-  Lot as SelectionLot,
-  LicensePlate as SelectionLP
-} from '../utils/materialSelectionUtils';
+import { enrichSelectedItems, createInventoryOptions } from '../utils/MaterialUtils';
+import { getDisplayValues, getAvailableQuantity, validateOrderQuantity } from '../utils/materialSelectionUtils';
 
 const DEFAULT_QUANTITY = 1;
 
-// Interfaces para los datos
+interface DisplayValues {
+  code: string;
+  name: string;
+  lot: string;
+  licensePlate: string;
+}
+
 interface UseMaterialSelectionProps {
   formData: any;
   setFormData: (data: any) => void;
   inventories?: any[];
   materials?: any[];
-}
-
-// Interfaz extendida para uso interno en el hook
-interface MaterialGroupItem extends SelectionMaterial {
-  availableQty: number;
-  inventoryItems: EnrichedInventoryOption[];
-}
-
-// Interfaz extendida para uso interno en el hook
-interface LotGroupItem extends SelectionLot {
-  availableQty: number;
-  inventoryItems: EnrichedInventoryOption[];
 }
 
 export const useMaterialSelection = ({
@@ -42,9 +25,9 @@ export const useMaterialSelection = ({
   materials = [],
 }: UseMaterialSelectionProps) => {
   const [selectedItems, setSelectedItems] = useState<any[]>(formData.selectedInventories || []);
-  const [currentMaterialSelection, setCurrentMaterialSelection] = useState<MaterialGroupItem | null>(null);
-  const [currentLotSelection, setCurrentLotSelection] = useState<LotGroupItem | null>(null);
-  const [currentLPSelection, setCurrentLPSelection] = useState<SelectionLP | null>(null);
+  const [currentMaterialSelection, setCurrentMaterialSelection] = useState<any>(null);
+  const [currentLotSelection, setCurrentLotSelection] = useState<any>(null);
+  const [currentLPSelection, setCurrentLPSelection] = useState<any>(null);
   const [materialInputValue, setMaterialInputValue] = useState<string>('');
 
   useEffect(() => {
@@ -57,27 +40,21 @@ export const useMaterialSelection = ({
     }
   }, [formData.selectedInventories, inventories, materials, selectedItems.length]);
 
-  const inventoryOptions = useMemo(() => 
-    createInventoryOptions(inventories, materials),
-    [inventories, materials]
-  );
+  const inventoryOptions = createInventoryOptions(inventories, materials);
 
   const projectFilteredOptions = useMemo(() => (
     formData.project 
-      ? inventoryOptions.filter((option) => option.project === formData.project)
+      ? inventoryOptions.filter((option: any) => option.project === formData.project)
       : inventoryOptions
   ), [formData.project, inventoryOptions]);
 
   const materialOptions = useMemo(() => {
-    const materialMap = new Map<string | number, MaterialGroupItem>();
-    
-    projectFilteredOptions.forEach((option) => {
-      const materialKey = option.material;
-      
-      if (!materialMap.has(materialKey)) {
-        materialMap.set(materialKey, {
-          id: `material-${materialKey}`,
-          material: materialKey,
+    const materialMap = new Map();
+    projectFilteredOptions.forEach((option: any) => {
+      if (!materialMap.has(option.material)) {
+        materialMap.set(option.material, {
+          id: `material-${option.material}`,
+          material: option.material,
           materialCode: option.materialCode || '',
           materialName: option.materialName || '',
           availableQty: 0,
@@ -86,29 +63,23 @@ export const useMaterialSelection = ({
           inventoryItems: []
         });
       }
-      
-      const materialGroup = materialMap.get(materialKey)!;
+      const materialGroup = materialMap.get(option.material);
       materialGroup.availableQty += option.availableQty || 0;
       materialGroup.inventoryItems.push(option);
     });
-    
-    return Array.from(materialMap.values()).filter((material) =>
-      !selectedItems.some((item) => String(item.material) === String(material.material))
+    return Array.from(materialMap.values()).filter((material: any) =>
+      !selectedItems.some((item: any) => item.material === material.material)
     );
   }, [projectFilteredOptions, selectedItems]);
 
   const lotOptions = useMemo(() => {
     if (!currentMaterialSelection) return [];
-    
-    const lotMap = new Map<string, LotGroupItem>();
-    
-    currentMaterialSelection.inventoryItems.forEach((item) => {
-      const lotKey = String(item.lot || '');
-      
-      if (!lotMap.has(lotKey)) {
-        lotMap.set(lotKey, {
-          id: `lot-${currentMaterialSelection.material}-${lotKey}`,
-          lot: lotKey,
+    const lotMap = new Map();
+    currentMaterialSelection.inventoryItems.forEach((item: any) => {
+      if (!lotMap.has(item.lot)) {
+        lotMap.set(item.lot, {
+          id: `lot-${currentMaterialSelection.material}-${item.lot}`,
+          lot: item.lot || '',
           material: item.material,
           materialCode: item.materialCode || '',
           materialName: item.materialName || '',
@@ -118,21 +89,18 @@ export const useMaterialSelection = ({
           inventoryItems: []
         });
       }
-      
-      const lotGroup = lotMap.get(lotKey)!;
+      const lotGroup = lotMap.get(item.lot);
       lotGroup.availableQty += item.availableQty || 0;
       lotGroup.inventoryItems.push(item);
     });
-    
     return Array.from(lotMap.values());
   }, [currentMaterialSelection]);
 
   const lpOptions = useMemo(() => {
     if (!currentLotSelection) return [];
-    
     return currentLotSelection.inventoryItems
-      .filter((item) => String(item.lot) === currentLotSelection.lot)
-      .map((item) => ({
+      .filter((item: any) => item.lot === currentLotSelection.lot)
+      .map((item: any) => ({
         ...item,
         id: item.id || `lp-${item.material}-${item.lot}-${item.license_plate || item.licensePlate}`,
         licensePlate: item.license_plate || item.licensePlate,
@@ -140,7 +108,7 @@ export const useMaterialSelection = ({
       }));
   }, [currentLotSelection]);
 
-  const resetSelections = (): void => {
+  const resetSelections = () => {
     setTimeout(() => {
       setCurrentMaterialSelection(null);
       setCurrentLotSelection(null);
@@ -153,21 +121,14 @@ export const useMaterialSelection = ({
     }, 0);
   };
 
-  const handleAddItem = (
-    material: MaterialGroupItem, 
-    lot: LotGroupItem | null, 
-    lp: SelectionLP | null, 
-    quantity: number = DEFAULT_QUANTITY
-  ): void => {
+  const handleAddItem = (material: any, lot: any, lp: any, quantity: number = DEFAULT_QUANTITY) => {
     if (!material) return;
-    
-    const displayValues = getDisplayValues(material, lot, lp);
+    const displayValues = getDisplayValues(material, lot, lp) as DisplayValues;
     const displayedAvailableQty = getAvailableQuantity(material, lot, lp);
     const validatedOrderQty = validateOrderQuantity(quantity, displayedAvailableQty);
-    
     const newItem = {
-      id: String(lp?.id || lot?.id || material.id || ''),
-      material: String(material.material || ''),
+      id: lp ? lp.id : (lot ? lot.id : material.id),
+      material: material.material,
       materialCode: displayValues.code,
       materialName: displayValues.name,
       lot: displayValues.lot,
@@ -175,56 +136,40 @@ export const useMaterialSelection = ({
       licensePlate: displayValues.licensePlate,
       availableQty: displayedAvailableQty,
       orderQuantity: validatedOrderQty,
-      uom: material.uom || materials.find((m) => m.id === material.material)?.uom || DEFAULT_QUANTITY,
+      uom: material.uom || materials.find((m: any) => m.id === material.material)?.uom || DEFAULT_QUANTITY,
       project: material.project
     };
-    
     const updatedItems = [...selectedItems, newItem];
     setSelectedItems(updatedItems);
-    
-    // Pasar directamente el array de items como en el código original
     setFormData(updatedItems);
-    
     resetSelections();
   };
 
-  const handleQuantityChange = (itemId: string | number, newQuantity: number): void => {
-    const item = selectedItems.find((item) => item.id === itemId);
-    if (!item) return;
-    
-    const validatedOrderQty = validateOrderQuantity(newQuantity, item.availableQty || 0);
-    
-    const newSelectedItems = selectedItems.map((selectedItem) => 
+  const handleQuantityChange = (itemId: any, newQuantity: number) => {
+    const item = selectedItems.find((item: any) => item.id === itemId);
+    const validatedOrderQty = validateOrderQuantity(newQuantity, item.availableQty);
+    const newSelectedItems = selectedItems.map((selectedItem: any) => 
       selectedItem.id === itemId 
         ? { ...selectedItem, orderQuantity: validatedOrderQty }
         : selectedItem
     );
-    
     setSelectedItems(newSelectedItems);
-    
-    // Pasar directamente el array de items como en el código original
     setFormData(newSelectedItems);
   };
 
-  const handleUomChange = (itemId: string | number, newUomId: number | string): void => {
-    const newSelectedItems = selectedItems.map((selectedItem) => 
+  const handleUomChange = (itemId: any, newUomId: any) => {
+    const newSelectedItems = selectedItems.map((selectedItem: any) => 
       selectedItem.id === itemId 
         ? { ...selectedItem, uom: newUomId }
         : selectedItem
     );
-    
     setSelectedItems(newSelectedItems);
-    
-    // Pasar directamente el array de items como en el código original
     setFormData(newSelectedItems);
   };
 
-  const handleRemoveItem = (itemId: string | number): void => {
-    const updatedItems = selectedItems.filter((item) => item.id !== itemId);
-    
+  const handleRemoveItem = (itemId: any) => {
+    const updatedItems = selectedItems.filter((item: any) => item.id !== itemId);
     setSelectedItems(updatedItems);
-    
-    // Pasar directamente el array de items como en el código original
     setFormData(updatedItems);
   };
 
