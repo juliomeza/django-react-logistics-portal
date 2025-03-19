@@ -1,5 +1,18 @@
 import { DEFAULT_QUANTITY } from '../utils/materialSelectionUtils';
 
+// Definición de un inventario de item para reemplazar el Array<any>
+interface InventoryItem {
+  id: number;
+  material: number;
+  warehouse: number;
+  quantity: number;
+  lot?: string;
+  license_plate?: string;
+  location?: string;
+  vendor_lot?: string;
+  [key: string]: unknown; // Usar unknown en lugar de any para una mayor seguridad de tipos
+}
+
 // Interfaces para las selecciones de material
 interface MaterialSelection {
   material: number;
@@ -8,8 +21,12 @@ interface MaterialSelection {
   availableQty: number;
   uom?: number;
   project?: number;
-  inventoryItems: Array<any>;
-  [key: string]: any;
+  inventoryItems: InventoryItem[]; // Tipo específico en lugar de Array<any>
+  // Propiedades opcionales específicas en lugar del genérico [key: string]: any
+  description?: string;
+  type?: number;
+  status?: number;
+  is_serialized?: boolean;
 }
 
 interface LotSelection extends MaterialSelection {
@@ -24,7 +41,10 @@ interface LPSelection {
   licensePlate?: string;
   quantity: number;
   availableQty?: number;
-  [key: string]: any;
+  // Propiedades opcionales específicas en lugar del genérico [key: string]: any
+  location?: string;
+  warehouse?: number;
+  vendor_lot?: string;
 }
 
 interface UseMaterialTableHandlersProps {
@@ -48,7 +68,12 @@ export const useMaterialTableHandlers = ({
    */
   const getCurrentAvailableQty = (): number => {
     if (currentLPSelection) {
-      const lpQuantity = currentLPSelection.quantity ? parseFloat(currentLPSelection.quantity.toString()) : 0;
+      // Manejo seguro de la conversión de quantity a número
+      const rawQuantity = currentLPSelection.quantity;
+      const lpQuantity = typeof rawQuantity === 'string' 
+        ? parseFloat(rawQuantity) || 0 
+        : typeof rawQuantity === 'number' ? rawQuantity : 0;
+      
       return lpQuantity;
     } else if (currentLotSelection) {
       return currentLotSelection.availableQty || 0;
@@ -66,7 +91,13 @@ export const useMaterialTableHandlers = ({
     if (!currentMaterialSelection) return;
     
     const quantityInput = document.getElementById('order-quantity-input') as HTMLInputElement | null;
-    const rawQuantity = quantityInput ? parseInt(quantityInput.value, 10) || DEFAULT_QUANTITY : DEFAULT_QUANTITY;
+    
+    // Manejo más seguro de la conversión a número
+    const rawQuantityText = quantityInput?.value || '';
+    const rawQuantity = /^\d+(\.\d+)?$/.test(rawQuantityText)
+      ? parseFloat(rawQuantityText)
+      : DEFAULT_QUANTITY;
+    
     const availableQty = getCurrentAvailableQty();
     const validQuantity = Math.min(Math.max(1, rawQuantity), availableQty);
 
