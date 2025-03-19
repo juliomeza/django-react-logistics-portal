@@ -1,8 +1,7 @@
 import apiProtected from '../../../services/api/secureApi';
 import { saveOrderLines, getSubmittedOrderStatus, handleApiError } from './apiUtils';
 import { prepareOrderData } from './OrderValidation';
-import { OrderFormData } from '../types';
-import { Order } from '../../../types/orders';
+import { Order, OrderFormData } from '../../../types/orders';
 import { AxiosResponse } from 'axios';
 import React from 'react';
 import { AuthUserData, ApiError } from '../../../types/auth';
@@ -48,7 +47,9 @@ export const saveOrderDetails = async (
   setOpenSnackbar: (open: boolean) => void
 ): Promise<boolean> => {
   try {
-    const orderData = await prepareOrderData(formData);
+    // Asegurar que formData es compatible con el tipo esperado por prepareOrderData
+    const orderData = await prepareOrderData(formData as any);
+    
     let response: AxiosResponse<Order>;
     const effectiveOrderId = orderId || orderIdFromParams;
 
@@ -94,11 +95,23 @@ export const submitOrder = async (
   setOpenSnackbar: (open: boolean) => void
 ): Promise<boolean> => {
   try {
-    const success = await saveOrderLines(formData, orderId || formData.id, setError, setOpenSnackbar);
+    // Asegurar que el ID existe
+    const effectiveOrderId = orderId || formData.id;
+    if (!effectiveOrderId) {
+      throw new Error('Order ID is missing');
+    }
+    
+    const success = await saveOrderLines(
+      formData, 
+      effectiveOrderId, 
+      setError, 
+      setOpenSnackbar
+    );
+    
     if (!success) throw new Error('Failed to save lines');
 
     const submittedStatusId = await getSubmittedOrderStatus();
-    await apiProtected.patch(`orders/${orderId || formData.id}/`, { order_status: submittedStatusId });
+    await apiProtected.patch(`orders/${effectiveOrderId}/`, { order_status: submittedStatusId });
 
     setError('Order submitted successfully.');
     setOpenSnackbar(true);
@@ -175,7 +188,9 @@ export const loadOrderData = async (
         lookup_code_order: order.lookup_code_order ?? '',
         selectedInventories: linesResponse.data.map((line: OrderLineResponse) => ({
           id: line.id,
-          material: line.material,
+          material: typeof line.material === 'object' && line.material !== null 
+            ? (line.material as Record<string, any>).id 
+            : line.material,
           license_plate: line.license_plate,
           orderQuantity: line.quantity,
         })),

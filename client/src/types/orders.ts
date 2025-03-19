@@ -133,3 +133,45 @@ export interface OrderLine extends TimeStamped {
 export type CreateOrder = Omit<Order, 'id' | 'created_date' | 'modified_date' | 'lines'> & {
   lines: Omit<OrderLine, 'id' | 'created_date' | 'modified_date' | 'order' | 'order_id'>[];
 };
+
+/**
+ * Datos del formulario para crear o actualizar órdenes
+ */
+export interface OrderFormData {
+  id?: number | string;
+  order_type?: number | string | OrderType;
+  order_class?: number | string | OrderClass;
+  order_status?: number | string | OrderStatus;
+  project?: number | string;
+  warehouse?: number | string;
+  contact?: number | string;
+  shipping_address?: number | string;
+  billing_address?: number | string;
+  carrier?: number | string;
+  service_type?: number | string;
+  reference_number?: string;
+  lookup_code_order?: string;
+  lookup_code_shipment?: string;
+  expected_delivery_date?: string;
+  delivery_date?: string;
+  notes?: string;
+  selectedInventories?: Array<{
+    id: number;
+    material: number;
+    orderQuantity?: number;
+  }>;
+}
+
+/**
+ * Errores de validación para el formulario de órdenes
+ */
+export interface OrderValidationErrors {
+  order_type?: boolean;
+  order_class?: boolean;
+  project?: boolean;
+  warehouse?: boolean;
+  contact?: boolean;
+  shipping_address?: boolean;
+  billing_address?: boolean;
+  [field: string]: boolean | undefined;
+}

@@ -1,5 +1,5 @@
-import { OrderFormData, OrderValidationErrors } from '../types';
-import { getFirstOrderStatus } from '../utils/apiUtils';
+import { OrderFormData, OrderValidationErrors } from '../../../types/orders';
+import { getFirstOrderStatus } from './apiUtils';
 
 /**
  * Interfaz genérica para objetos con ID
