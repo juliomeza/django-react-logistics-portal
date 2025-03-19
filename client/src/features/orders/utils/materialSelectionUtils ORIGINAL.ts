@@ -2,40 +2,12 @@
 export const DEFAULT_QUANTITY = 1;
 
 /**
- * Interfaz para material
- */
-interface Material {
-  materialName?: string;
-  materialCode?: string;
-  [key: string]: any;
-}
-
-/**
- * Interfaz para lote
- */
-interface Lot {
-  lot?: string;
-  availableQty?: number;
-  [key: string]: any;
-}
-
-/**
- * Interfaz para placa de licencia (license plate)
- */
-interface LicensePlate {
-  license_plate?: string;
-  licensePlate?: string;
-  quantity?: number | string;
-  [key: string]: any;
-}
-
-/**
  * Obtiene los valores a mostrar en la UI para un conjunto selección.
  */
 export const getDisplayValues = (
-  material: Material,
-  lot: Lot | null,
-  lp: LicensePlate | null
+  material: any,
+  lot: any,
+  lp: any
 ): { name: string; code: string; lot: string; licensePlate: string } => ({
   name: material.materialName || '',
   code: material.materialCode || '',
@@ -47,12 +19,12 @@ export const getDisplayValues = (
  * Obtiene la cantidad disponible basada en la selección actual.
  */
 export const getAvailableQuantity = (
-  material: Material,
-  lot: Lot | null,
-  lp: LicensePlate | null
+  material: any,
+  lot: any,
+  lp: any
 ): number => {
   if (lp) {
-    return typeof lp.quantity === 'string' ? parseFloat(lp.quantity) || 0 : (lp.quantity || 0);
+    return lp.quantity ? parseFloat(lp.quantity) : 0;
   } else if (lot) {
     return lot.availableQty || 0;
   } else {
