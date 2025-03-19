@@ -8,7 +8,7 @@ type ItemCollection<T> = Array<T & { id: number | string }>;
 /**
  * Busca un elemento en una colección por su ID y retorna el valor de un campo específico.
  */
-export const findItemById = <T extends Record<string, any>>(
+export const findItemById = <T extends Record<string, unknown>>(
   collection: ItemCollection<T>,
   id: string | number,
   fieldName: keyof T,

@@ -159,7 +159,7 @@ export const createContact = async (
 export interface ProjectWithContacts {
   id: string | number;
   contacts?: (string | number)[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

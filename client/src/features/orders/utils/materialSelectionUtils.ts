@@ -4,29 +4,40 @@ export const DEFAULT_QUANTITY = 1;
 /**
  * Interfaz para material
  */
-interface Material {
+export interface Material {
   materialName?: string;
   materialCode?: string;
-  [key: string]: any;
+  availableQty?: number;
+  [key: string]: unknown;
 }
 
 /**
  * Interfaz para lote
  */
-interface Lot {
+export interface Lot {
   lot?: string;
   availableQty?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
  * Interfaz para placa de licencia (license plate)
  */
-interface LicensePlate {
+export interface LicensePlate {
   license_plate?: string;
   licensePlate?: string;
   quantity?: number | string;
-  [key: string]: any;
+  [key: string]: unknown;
+}
+
+/**
+ * Tipo para los valores a mostrar en la UI
+ */
+export interface DisplayValues {
+  name: string;
+  code: string;
+  lot: string;
+  licensePlate: string;
 }
 
 /**
@@ -36,7 +47,7 @@ export const getDisplayValues = (
   material: Material,
   lot: Lot | null,
   lp: LicensePlate | null
-): { name: string; code: string; lot: string; licensePlate: string } => ({
+): DisplayValues => ({
   name: material.materialName || '',
   code: material.materialCode || '',
   lot: lot ? (lot.lot || '') : '',

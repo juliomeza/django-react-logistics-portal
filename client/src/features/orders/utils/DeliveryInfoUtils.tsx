@@ -105,6 +105,14 @@ export interface FilteredOption extends ContactOption {
 }
 
 /**
+ * Interfaz para parámetros de filtrado
+ */
+export interface FilterParams {
+  inputValue: string;
+  getOptionLabel: (option: FilteredOption) => string;
+}
+
+/**
  * Crea opciones de filtrado personalizadas para autocomplete
  * @returns Función de filtrado personalizada
  */
