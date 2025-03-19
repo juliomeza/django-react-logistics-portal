@@ -39,11 +39,7 @@ export const buildContactOptions = (contacts: any[], addresses: any[]): any[] =>
     );
     const city = shippingAddress ? shippingAddress.city : '';
     const displayName = contact.company_name || contact.contact_name;
-    return { 
-      ...contact, 
-      label: city ? `${displayName} - ${city}` : displayName,
-      isAddOption: false
-    };
+    return { ...contact, label: city ? `${displayName} - ${city}` : displayName };
   });
 };
 
