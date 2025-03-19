@@ -57,8 +57,15 @@ export const enrichSelectedItems = (
   inventories: InventoryItem[] | null | undefined,
   materials: Material[] | null | undefined
 ): SelectedInventoryItem[] => {
-  if (!selectedInventories || !inventories || !materials || inventories.length === 0 || materials.length === 0) {
-    return selectedInventories || [];
+  // Verificar que selectedInventories sea un array
+  if (!selectedInventories || !Array.isArray(selectedInventories)) {
+    return [];
+  }
+  
+  // Verificar que inventories y materials sean arrays válidos
+  if (!inventories || !Array.isArray(inventories) || inventories.length === 0 || 
+      !materials || !Array.isArray(materials) || materials.length === 0) {
+    return selectedInventories;
   }
   
   return selectedInventories.map((item: SelectedInventoryItem) => {
@@ -108,7 +115,7 @@ export const createInventoryOptions = (
   inventories: InventoryItem[] | null | undefined,
   materials: Material[] | null | undefined
 ): EnrichedInventoryOption[] => {
-  if (!inventories || !materials) {
+  if (!inventories || !Array.isArray(inventories) || !materials || !Array.isArray(materials)) {
     return [];
   }
 

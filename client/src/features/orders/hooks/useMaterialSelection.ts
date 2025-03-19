@@ -153,6 +153,7 @@ export const useMaterialSelection = ({
     }, 0);
   };
 
+  // Esta versión debería combinar lo mejor de ambos enfoques
   const handleAddItem = (
     material: MaterialGroupItem, 
     lot: LotGroupItem | null, 
@@ -166,8 +167,8 @@ export const useMaterialSelection = ({
     const validatedOrderQty = validateOrderQuantity(quantity, displayedAvailableQty);
     
     const newItem = {
-      id: String(lp?.id || lot?.id || material.id || ''),
-      material: String(material.material || ''),
+      id: lp ? lp.id : (lot ? lot.id : material.id),
+      material: material.material,
       materialCode: displayValues.code,
       materialName: displayValues.name,
       lot: displayValues.lot,
@@ -179,15 +180,36 @@ export const useMaterialSelection = ({
       project: material.project
     };
     
+    // Actualizamos el estado local
     const updatedItems = [...selectedItems, newItem];
     setSelectedItems(updatedItems);
     
-    // Pasar directamente el array de items como en el código original
-    setFormData(updatedItems);
+    // Actualizar el formData - VERSIÓN HIBRIDA
+    // Si formData.selectedInventories es un array, actualizamos directamente
+    // Si no, lo enviamos como propiedad
+    const isDirectUpdate = typeof setFormData === 'function' && 
+                           (!formData.hasOwnProperty('selectedInventories') || 
+                            Array.isArray(formData.selectedInventories));
+
+    if (isDirectUpdate) {
+      // Pasamos directamente el array (como en la versión original)
+      setFormData(updatedItems);
+    } else {
+      // Pasamos el objeto con la propiedad actualizando el formData completo
+      setFormData({
+        ...formData,
+        selectedInventories: updatedItems
+      });
+    }
     
-    resetSelections();
+    // Asegurarnos de que todo se procese correctamente antes de resetear
+    setTimeout(() => {
+      resetSelections();
+    }, 50); // Un pequeño retraso para asegurar que la actualización se procese antes
   };
 
+  // Aplicamos la misma lógica híbrida a los demás métodos
+  
   const handleQuantityChange = (itemId: string | number, newQuantity: number): void => {
     const item = selectedItems.find((item) => item.id === itemId);
     if (!item) return;
@@ -202,8 +224,19 @@ export const useMaterialSelection = ({
     
     setSelectedItems(newSelectedItems);
     
-    // Pasar directamente el array de items como en el código original
-    setFormData(newSelectedItems);
+    // Actualizar formData - VERSIÓN HÍBRIDA
+    const isDirectUpdate = typeof setFormData === 'function' && 
+                           (!formData.hasOwnProperty('selectedInventories') || 
+                            Array.isArray(formData.selectedInventories));
+
+    if (isDirectUpdate) {
+      setFormData(newSelectedItems);
+    } else {
+      setFormData({
+        ...formData,
+        selectedInventories: newSelectedItems
+      });
+    }
   };
 
   const handleUomChange = (itemId: string | number, newUomId: number | string): void => {
@@ -215,8 +248,19 @@ export const useMaterialSelection = ({
     
     setSelectedItems(newSelectedItems);
     
-    // Pasar directamente el array de items como en el código original
-    setFormData(newSelectedItems);
+    // Actualizar formData - VERSIÓN HÍBRIDA
+    const isDirectUpdate = typeof setFormData === 'function' && 
+                           (!formData.hasOwnProperty('selectedInventories') || 
+                            Array.isArray(formData.selectedInventories));
+
+    if (isDirectUpdate) {
+      setFormData(newSelectedItems);
+    } else {
+      setFormData({
+        ...formData,
+        selectedInventories: newSelectedItems
+      });
+    }
   };
 
   const handleRemoveItem = (itemId: string | number): void => {
@@ -224,8 +268,19 @@ export const useMaterialSelection = ({
     
     setSelectedItems(updatedItems);
     
-    // Pasar directamente el array de items como en el código original
-    setFormData(updatedItems);
+    // Actualizar formData - VERSIÓN HÍBRIDA
+    const isDirectUpdate = typeof setFormData === 'function' && 
+                           (!formData.hasOwnProperty('selectedInventories') || 
+                            Array.isArray(formData.selectedInventories));
+
+    if (isDirectUpdate) {
+      setFormData(updatedItems);
+    } else {
+      setFormData({
+        ...formData,
+        selectedInventories: updatedItems
+      });
+    }
   };
 
   const isProjectSelected = Boolean(formData.project);
