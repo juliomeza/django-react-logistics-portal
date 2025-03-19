@@ -46,6 +46,14 @@ const useReferenceData = (user: AuthUserData | null): UseReferenceDataReturn => 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
+  // Función segura para convertir ID de usuario a número
+  const getUserId = (user: AuthUserData | null): number => {
+    if (!user || !user.id) return 0;
+    
+    const parsed = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     
@@ -71,7 +79,7 @@ const useReferenceData = (user: AuthUserData | null): UseReferenceDataReturn => 
         apiProtected.get<CarrierService[]>('carrier-services/'),
       ]);
       
-      const userId = parseInt(String(user?.id || 0), 10);
+      const userId = getUserId(user);
       
       setData({
         orderTypes: orderTypesRes.data,
@@ -86,7 +94,8 @@ const useReferenceData = (user: AuthUserData | null): UseReferenceDataReturn => 
         carrierServices: carrierServicesRes.data,
       });
     } catch (err) {
-      setError('Failed to load reference data');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load reference data';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -102,7 +111,7 @@ const useReferenceData = (user: AuthUserData | null): UseReferenceDataReturn => 
         apiProtected.get<ApiProject[]>('projects/'),
       ]);
       
-      const userId = parseInt(String(user?.id || 0), 10);
+      const userId = getUserId(user);
       
       setData((prev) => ({
         ...prev,
@@ -113,7 +122,10 @@ const useReferenceData = (user: AuthUserData | null): UseReferenceDataReturn => 
         ),
       }));
     } catch (err) {
-      setError('Failed to refresh reference data');
+      const errorMessage = err instanceof Error 
+        ? `Failed to refresh reference data: ${err.message}`
+        : 'Failed to refresh reference data';
+      setError(errorMessage);
       console.error('Error refetching reference data:', err);
     }
   };
