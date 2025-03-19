@@ -1,19 +1,23 @@
 import { useState, ChangeEvent } from 'react';
-import { buildContactOptions, createCustomFilterOptions } from '../utils/DeliveryInfoUtils';
-import { createContact, assignContactToProject } from '../utils/contactUtils';
+import { buildContactOptions, createCustomFilterOptions, ContactOption, FilteredOption, AddressDisplay } from '../utils/DeliveryInfoUtils';
+import { createContact, assignContactToProject, ProjectWithContacts as ApiProjectWithContacts } from '../utils/contactUtils';
+import { Contact, Address } from '../../../types/logistics';
+import { Project } from '../../../types/enterprise';
+import { OrderFormData } from '../../../types/orders';
 
-interface Address {
+// Heredamos de las interfaces existentes para garantizar consistencia
+export interface ContactFormAddress extends Omit<Address, 'id' | 'created_date' | 'modified_date' | 'notes'> {
   address_line_1: string;
   address_line_2: string;
   city: string;
   state: string;
   postal_code: string;
   country: string;
-  entity_type: string;
-  address_type: string;
+  entity_type: 'enterprise' | 'warehouse' | 'recipient';
+  address_type: 'shipping' | 'billing';
 }
 
-export interface ContactState {
+export interface ContactState extends Omit<Contact, 'id' | 'created_date' | 'modified_date' | 'addresses'> {
   company_name: string;
   contact_name: string;
   attention: string;
@@ -22,8 +26,8 @@ export interface ContactState {
   mobile: string;
   title: string;
   notes: string;
-  shipping_address: Address;
-  billing_address: Address;
+  shipping_address: ContactFormAddress;
+  billing_address: ContactFormAddress;
 }
 
 const initialContactState: ContactState = {
@@ -58,18 +62,18 @@ const initialContactState: ContactState = {
 };
 
 interface UseContactFormProps {
-  formData: any;
+  formData: OrderFormData;
   handleChange: (event: { target: { name: string; value: any } }) => void;
-  contacts?: any[];
-  addresses?: any[];
-  projects?: any[];
-  refetchReferenceData: () => Promise<any>;
+  contacts?: Contact[];
+  addresses?: Address[];
+  projects?: Project[];
+  refetchReferenceData: () => Promise<void>;
 }
 
 interface CreateContactResponse {
-  shippingId: any;
-  billingId: any;
-  newContactId: any;
+  shippingId: number;
+  billingId: number;
+  newContactId: number;
 }
 
 export const useContactForm = ({
@@ -86,51 +90,57 @@ export const useContactForm = ({
   const [sameBillingAddress, setSameBillingAddress] = useState<boolean>(true);
   const [modalErrors, setModalErrors] = useState<{ [key: string]: boolean | string }>({});
 
-  const contactOptions = buildContactOptions(contacts, addresses);
+  // Preservamos la estructura original de los datos mientras aplicamos el typecast
+  // Esto mantiene la funcionalidad visual mientras corrige los errores de tipo
+  const contactOptions = buildContactOptions(
+    contacts as unknown as ContactOption[],
+    addresses as unknown as AddressDisplay[]
+  );
+  
   const customFilterOptions = createCustomFilterOptions();
 
   const selectedContact = formData.contact
-    ? contactOptions.find((c: any) => c.id === formData.contact) || null
+    ? contactOptions.find((c) => c.id === formData.contact) || null
     : null;
 
   const selectedShippingAddress = formData.shipping_address
-    ? addresses.find((a: any) => a.id === formData.shipping_address)
+    ? addresses.find((a: Address) => a.id === Number(formData.shipping_address))
     : null;
 
   const selectedBillingAddress = formData.billing_address
-    ? addresses.find((a: any) => a.id === formData.billing_address)
+    ? addresses.find((a: Address) => a.id === Number(formData.billing_address))
     : null;
 
-  const updateFormData = (contactId: any, shippingId: any, billingId: any) => {
+  const updateFormData = (contactId: string | number | null, shippingId: string | number | null, billingId: string | number | null): void => {
     handleChange({ target: { name: 'contact', value: contactId } });
     handleChange({ target: { name: 'shipping_address', value: shippingId } });
     handleChange({ target: { name: 'billing_address', value: billingId } });
   };
 
-  const handleContactChange = (event: any, selectedOption: any) => {
+  const handleContactChange = (event: React.SyntheticEvent, selectedOption: FilteredOption | null): void => {
     if (selectedOption?.isAddOption) {
       handleOpenModal();
       return;
     }
     
     if (!selectedOption) {
-      updateFormData('', '', '');
+      updateFormData(null, null, null);
       return;
     }
 
-    updateFormData(selectedOption.id, '', '');
+    updateFormData(selectedOption.id, null, null);
 
-    if (selectedOption.addresses?.length > 0) {
-      updateContactAddresses(selectedOption.addresses);
+    if (selectedOption.addresses && selectedOption.addresses.length > 0) {
+      updateContactAddresses(selectedOption.addresses as number[]);
     }
   };
 
-  const updateContactAddresses = (addressIds: any[]) => {
-    const contactAddressList = addresses.filter((addr: any) =>
+  const updateContactAddresses = (addressIds: number[]): void => {
+    const contactAddressList = addresses.filter((addr: Address) =>
       addressIds.includes(addr.id)
     );
-    const shippingAddr = contactAddressList.find((addr: any) => addr.address_type === 'shipping');
-    const billingAddr = contactAddressList.find((addr: any) => addr.address_type === 'billing');
+    const shippingAddr = contactAddressList.find((addr: Address) => addr.address_type === 'shipping');
+    const billingAddr = contactAddressList.find((addr: Address) => addr.address_type === 'billing');
     
     if (shippingAddr) {
       handleChange({ target: { name: 'shipping_address', value: shippingAddr.id } });
@@ -141,7 +151,10 @@ export const useContactForm = ({
     }
   };
 
-  const handleNewContactChange = (e: ChangeEvent<HTMLInputElement>, addressType: 'shipping_address' | 'billing_address' | null = null) => {
+  const handleNewContactChange = (
+    e: ChangeEvent<HTMLInputElement>, 
+    addressType: 'shipping_address' | 'billing_address' | null = null
+  ): void => {
     const { name, value } = e.target;
     
     if (addressType) {
@@ -166,7 +179,7 @@ export const useContactForm = ({
     setModalErrors((prev) => ({ ...prev, [name]: false }));
   };
 
-  const handleSameAddressChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleSameAddressChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const checked = e.target.checked;
     setSameBillingAddress(checked);
     
@@ -188,7 +201,7 @@ export const useContactForm = ({
     }
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     const errors: { [key: string]: boolean | string } = {};
     
     if (!newContact.company_name) errors.company_name = true;
@@ -205,7 +218,11 @@ export const useContactForm = ({
     return Object.keys(errors).length === 0;
   };
 
-  const validateAddress = (address: Address, prefix: string, errors: { [key: string]: boolean | string }) => {
+  const validateAddress = (
+    address: ContactFormAddress, 
+    prefix: string, 
+    errors: { [key: string]: boolean | string }
+  ): void => {
     if (!address.address_line_1) errors[`${prefix}_address_line_1`] = true;
     if (!address.city) errors[`${prefix}_city`] = true;
     if (!address.state) errors[`${prefix}_state`] = true;
@@ -213,7 +230,7 @@ export const useContactForm = ({
     if (!address.country) errors[`${prefix}_country`] = true;
   };
 
-  const handleOpenModal = () => {
+  const handleOpenModal = (): void => {
     if (!formData.project) {
       setOpenWarningDialog(true);
       return;
@@ -221,17 +238,25 @@ export const useContactForm = ({
     setOpenModal(true);
   };
 
-  const handleSaveNewContact = async () => {
+  const handleSaveNewContact = async (): Promise<void> => {
     if (!validateForm()) {
       console.log('Validation failed');
       return;
     }
 
     try {
-      const { shippingId, billingId, newContactId } = (await createContact(newContact, sameBillingAddress)) as CreateContactResponse;
+      const { shippingId, billingId, newContactId } = await createContact(newContact, sameBillingAddress) as CreateContactResponse;
 
       try {
-        await assignContactToProject(newContactId, formData.project, projects);
+        // Convertir los proyectos al formato esperado por assignContactToProject
+        const projectsWithContacts = projects.map(project => ({
+          id: project.id,
+          contacts: project.contacts?.map(contact => 
+            typeof contact === 'object' ? contact.id : contact
+          )
+        })) as ApiProjectWithContacts[];
+
+        await assignContactToProject(newContactId, Number(formData.project), projectsWithContacts);
       } catch (error) {
         console.warn('Error al asignar contacto al proyecto:', error);
         setModalErrors({ general: 'Contact created, but could not be assigned to project' });
