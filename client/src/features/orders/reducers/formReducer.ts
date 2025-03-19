@@ -1,21 +1,16 @@
-export interface OrderFormState {
-  lookup_code_order: string;
-  order_type: string;
-  order_class: string;
-  // ...otros campos...
-}
+// formReducer.ts
 
-export const initialState: OrderFormState = {
-  lookup_code_order: '',
-  order_type: '',
-  order_class: '',
-  // ...otros campos con sus valores iniciales...
-};
-
+/**
+ * Estado del formulario de orden
+ * Representa los campos editables de una orden y sus inventarios seleccionados
+ */
 export interface FormState {
+  // Campos básicos de la orden
   lookup_code_order: string;
   reference_number: string;
   notes: string;
+  
+  // Relaciones (IDs como strings para compatibilidad con inputs)
   order_type: string;
   order_class: string;
   warehouse: string;
@@ -23,12 +18,26 @@ export interface FormState {
   carrier: string;
   service_type: string;
   contact: string;
+  
+  // Fechas
   expected_delivery_date: string;
+  
+  // Direcciones
   shipping_address: string;
   billing_address: string;
-  selectedInventories: any[];
+  
+  // Inventarios seleccionados para esta orden
+  selectedInventories: Array<{
+    id: number;
+    material: number;
+    orderQuantity?: number;
+    // Otros campos que pueda necesitar tu aplicación
+  }>;
 }
 
+/**
+ * Estado inicial del formulario con valores vacíos
+ */
 export const initialFormState: FormState = {
   lookup_code_order: '',
   reference_number: '',
@@ -46,11 +55,20 @@ export const initialFormState: FormState = {
   selectedInventories: [],
 };
 
-type FormAction =
+/**
+ * Acciones posibles para el reducer del formulario
+ */
+export type FormAction =
   | { type: 'UPDATE_FIELD'; field: keyof FormState; value: any }
-  | { type: 'SET_INVENTORIES'; inventories: any[] }
+  | { type: 'SET_INVENTORIES'; inventories: FormState['selectedInventories'] }
   | { type: 'SET_FORM_DATA'; data: Partial<FormState> };
 
+/**
+ * Reducer para manejar el estado del formulario de órdenes
+ * @param state Estado actual del formulario
+ * @param action Acción a ejecutar
+ * @returns Nuevo estado del formulario
+ */
 export const formReducer = (
   state: FormState,
   action: FormAction
@@ -65,4 +83,21 @@ export const formReducer = (
     default:
       return state;
   }
+};
+
+/**
+ * Para compatibilidad con código existente, mantenemos OrderFormState
+ */
+export interface OrderFormState {
+  lookup_code_order: string;
+  order_type: string;
+  order_class: string;
+  // Puede contener otros campos según sea necesario
+}
+
+export const initialState: OrderFormState = {
+  lookup_code_order: '',
+  order_type: '',
+  order_class: '',
+  // Otros campos con sus valores iniciales
 };
