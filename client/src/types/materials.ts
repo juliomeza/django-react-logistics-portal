@@ -44,3 +44,67 @@ export interface MaterialPriceHistory extends TimeStamped {
   effective_date: string;
   end_date?: string;
 }
+
+// --- Interfaces específicas para componentes de Materials ---
+
+/**
+ * Versión simplificada de Material para mostrar en tablas y selecciones
+ */
+export interface MaterialDisplay {
+  id: number;
+  lookup_code?: string;
+  name?: string;
+  uom?: number | string;
+}
+
+/**
+ * Interfaz para una opción de material en selecciones
+ */
+export interface MaterialOption {
+  id: number;
+  material: number;
+  materialCode?: string;
+  materialName?: string;
+  availableQty?: number;
+}
+
+/**
+ * Interfaz para una opción de lote en selecciones
+ */
+export interface LotOption {
+  lot: string;
+  id?: number;
+}
+
+/**
+ * Interfaz para una opción de placa de licencia en selecciones
+ * Unifica las propiedades license_plate y licensePlate para mayor consistencia
+ */
+export interface LicensePlateOption {
+  license_plate?: string;
+  licensePlate?: string;
+  id?: number;
+}
+
+/**
+ * Interfaz para los elementos de inventario seleccionados
+ */
+export interface SelectedItem {
+  id: number | string;
+  material: number;
+  materialCode?: string;
+  materialName?: string;
+  lot?: string;
+  license_plate?: string;
+  licensePlate?: string;
+  availableQty: number;
+  orderQuantity?: number;
+  uom?: number | string;
+}
+
+/**
+ * Mapa de UOMs por material
+ */
+export interface MaterialUOMsMap {
+  [materialId: string]: UOM[];
+}

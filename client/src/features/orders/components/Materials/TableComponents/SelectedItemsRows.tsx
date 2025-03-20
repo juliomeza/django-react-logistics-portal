@@ -3,43 +3,15 @@ import { TableRow, TableCell, TextField, IconButton } from '@mui/material';
 import { Delete } from '@mui/icons-material';
 import { formatQuantity } from '../../../utils/MaterialUtils';
 import { DEFAULT_QUANTITY } from '../../../utils/materialSelectionUtils';
-
-// Interfaz para el Material
-interface Material {
-  id: number;
-  lookup_code?: string;
-  name?: string;
-  uom?: number | string;
-}
-
-// Interfaz para la unidad de medida
-interface UOM {
-  id: number;
-  name: string;
-  lookup_code?: string;
-}
-
-// Interfaz para los elementos seleccionados
-interface SelectedItem {
-  id: number | string;
-  material: number;
-  materialCode?: string;
-  materialName?: string;
-  lot?: string;
-  license_plate?: string;
-  licensePlate?: string;
-  availableQty: number;
-  orderQuantity?: number;
-  uom?: number | string;
-}
+import { MaterialDisplay, SelectedItem, UOM, MaterialUOMsMap } from '../../../../../types/materials';
 
 interface SelectedItemsRowsProps {
   selectedItems: SelectedItem[];
-  materials: Material[];
+  materials: MaterialDisplay[];
   handleQuantityChange: (itemId: number | string, newQuantity: number | string) => void;
   handleUomChange: (itemId: number | string, newUom: number | string) => void;
   handleRemoveItem: (itemId: number | string) => void;
-  materialUoms: { [key: string]: UOM[] };
+  materialUoms: MaterialUOMsMap;
 }
 
 const SelectedItemsRows: React.FC<SelectedItemsRowsProps> = ({
