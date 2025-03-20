@@ -4,46 +4,20 @@ import { Add } from '@mui/icons-material';
 import { formatQuantity } from '../../../utils/MaterialUtils';
 import { DEFAULT_QUANTITY } from '../../../utils/materialSelectionUtils';
 
-// Interfaces para los distintos tipos de opciones
-interface MaterialOption {
-  material: number;
-  materialCode?: string;
-  materialName?: string;
-  id?: number;
-}
-
-interface LotOption {
-  lot: string;
-  id?: number;
-}
-
-interface LicensePlateOption {
-  license_plate?: string;
-  licensePlate?: string;
-  id?: number;
-}
-
-// Interfaz para la unidad de medida
-interface UOM {
-  id: number;
-  name: string;
-  lookup_code?: string;
-}
-
 interface CascadeSearchRowProps {
-  materialOptions: MaterialOption[];
-  lotOptions: LotOption[];
-  lpOptions: LicensePlateOption[];
-  currentMaterialSelection: MaterialOption | null;
-  currentLotSelection: LotOption | null;
-  currentLPSelection: LicensePlateOption | null;
-  setCurrentMaterialSelection: (value: MaterialOption | null) => void;
-  setCurrentLotSelection: (value: LotOption | null) => void;
-  setCurrentLPSelection: (value: LicensePlateOption | null) => void;
+  materialOptions: any[];
+  lotOptions: any[];
+  lpOptions: any[];
+  currentMaterialSelection: any;
+  currentLotSelection: any;
+  currentLPSelection: any;
+  setCurrentMaterialSelection: (value: any) => void;
+  setCurrentLotSelection: (value: any) => void;
+  setCurrentLPSelection: (value: any) => void;
   inputValue: string;
   setInputValue: (value: string) => void;
   getCurrentAvailableQty: () => number;
-  materialUoms: { [key: string]: UOM[] };
+  materialUoms: { [key: string]: any };
   handleAddButtonClick: () => void;
 }
 
