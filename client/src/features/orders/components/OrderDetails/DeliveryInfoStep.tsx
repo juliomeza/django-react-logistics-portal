@@ -6,15 +6,25 @@ import { useContactForm } from '../../hooks/useContactForm';
 import AddressDisplay from '../DeliveryInfo/AddressDisplay';
 import ProjectWarningDialog from '../DeliveryInfo/ProjectWarningDialog';
 import ContactFormModal from '../Contacts/ContactFormModal';
+import { OrderFormData } from '../../../../types/orders';
+import { Project } from '../../../../types/enterprise';
+import { Contact, Address } from '../../../../types/logistics';
+
+// No definimos nuestra propia interfaz ContactOption
+// para evitar conflictos con la que está en DeliveryInfoUtils
 
 interface DeliveryInfoStepProps {
-  formData: any;
+  formData: Pick<OrderFormData, 'expected_delivery_date' | 'contact' | 'shipping_address' | 'billing_address'>;
   handleChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-  contacts?: any[];
-  addresses?: any[];
-  formErrors?: { [key: string]: any };
-  projects?: any[];
-  user: any;
+  contacts?: Contact[];
+  addresses?: Address[];
+  formErrors?: Record<string, boolean>;
+  projects?: Project[];
+  user: {
+    id: number;
+    username: string;
+    [key: string]: any;
+  };
   isOrderLocked: boolean;
   refetchReferenceData: () => void;
 }
@@ -50,12 +60,15 @@ const DeliveryInfoStep: React.FC<DeliveryInfoStepProps> = ({
   } = useContactForm({
     formData,
     // Adaptamos handleChange para que tenga la firma esperada por el hook:
-    handleChange: (event) => handleChange(event as any),
+    handleChange: (event) => handleChange(event as React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>),
     contacts,
     addresses,
     projects,
     // Convertimos refetchReferenceData a una función que retorne Promise<any> sin cambiar su lógica:
-    refetchReferenceData: refetchReferenceData as unknown as () => Promise<any>,
+    refetchReferenceData: async () => {
+      refetchReferenceData();
+      return Promise.resolve();
+    },
   });
 
   return (
@@ -87,22 +100,23 @@ const DeliveryInfoStep: React.FC<DeliveryInfoStepProps> = ({
             options={contactOptions}
             value={selectedContact}
             onChange={handleContactChange}
-            getOptionLabel={(option: any) => {
+            getOptionLabel={(option) => {
               if (typeof option === 'string') return option;
               return option?.label || '';
             }}
             renderOption={(props, option) => {
-              const { key, ...otherProps } = props;
+              // Extraemos key y nos quedamos con el resto de props
+              const { key, ...otherProps } = props as React.HTMLAttributes<HTMLLIElement> & { key: string };
               if (option.isAddOption) {
                 return (
-                  <li key={key} {...otherProps} style={{ fontWeight: 'bold', color: '#1976d2' }}>
+                  <li key={typeof option.id === 'number' ? option.id.toString() : option.id} {...otherProps} style={{ fontWeight: 'bold', color: '#1976d2' }}>
                     <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
                       + {option.label}
                     </Box>
                   </li>
                 );
               }
-              return <li key={key} {...otherProps}>{option.label}</li>;
+              return <li key={typeof option.id === 'number' ? option.id.toString() : option.id} {...otherProps}>{option.label}</li>;
             }}
             filterOptions={customFilterOptions}
             renderInput={(params) => (
@@ -110,7 +124,7 @@ const DeliveryInfoStep: React.FC<DeliveryInfoStepProps> = ({
                 {...params}
                 label="Company or Contact *"
                 error={!!formErrors.contact}
-                helperText={formErrors.contact && 'This field is required'}
+                helperText={formErrors.contact ? 'This field is required' : undefined}
                 fullWidth
               />
             )}
@@ -124,7 +138,7 @@ const DeliveryInfoStep: React.FC<DeliveryInfoStepProps> = ({
           <AddressDisplay
             title="Shipping Address *"
             address={selectedShippingAddress}
-            error={formErrors.shipping_address}
+            error={!!formErrors.shipping_address}
           />
         </Grid>
 
@@ -133,7 +147,7 @@ const DeliveryInfoStep: React.FC<DeliveryInfoStepProps> = ({
           <AddressDisplay
             title="Billing Address *"
             address={selectedBillingAddress}
-            error={formErrors.billing_address}
+            error={!!formErrors.billing_address}
           />
         </Grid>
       </Grid>
@@ -143,11 +157,9 @@ const DeliveryInfoStep: React.FC<DeliveryInfoStepProps> = ({
         open={openModal}
         onClose={() => setOpenModal(false)}
         newContact={newContact}
-        modalErrors={modalErrors as any}
+        modalErrors={modalErrors}
         sameBillingAddress={sameBillingAddress}
-        handleNewContactChange={
-          handleNewContactChange as (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, addressType?: string) => void
-        }
+        handleNewContactChange={handleNewContactChange as any}
         handleSameAddressChange={handleSameAddressChange}
         handleSaveNewContact={handleSaveNewContact}
       />
