@@ -6,8 +6,8 @@ import { DEFAULT_QUANTITY } from '../../../utils/materialSelectionUtils';
 import { 
   MaterialOption, 
   LotOption, 
-  LicensePlateOption, 
-  UOM 
+  LicensePlateOption,
+  MaterialUOMsMap
 } from '../../../../../types/materials';
 
 interface CascadeSearchRowProps {
@@ -23,7 +23,7 @@ interface CascadeSearchRowProps {
   inputValue: string;
   setInputValue: (value: string) => void;
   getCurrentAvailableQty: () => number;
-  materialUoms: { [key: string]: UOM[] };
+  materialUoms: MaterialUOMsMap;
   handleAddButtonClick: () => void;
 }
 

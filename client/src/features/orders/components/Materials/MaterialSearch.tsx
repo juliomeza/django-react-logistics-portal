@@ -1,15 +1,7 @@
 import React from 'react';
 import { TableCell, TableRow, TextField, IconButton, Autocomplete } from '@mui/material';
 import { Add } from '@mui/icons-material';
-
-// Interfaz para las opciones de material disponibles
-interface MaterialOption {
-  id: number;
-  materialCode?: string;
-  materialName?: string;
-  lookup_code?: string;
-  name?: string;
-}
+import { MaterialOption } from '../../../../types/materials';
 
 interface MaterialSearchProps {
   availableOptions: MaterialOption[];

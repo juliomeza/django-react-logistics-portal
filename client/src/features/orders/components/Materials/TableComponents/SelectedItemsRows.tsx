@@ -3,7 +3,11 @@ import { TableRow, TableCell, TextField, IconButton } from '@mui/material';
 import { Delete } from '@mui/icons-material';
 import { formatQuantity } from '../../../utils/MaterialUtils';
 import { DEFAULT_QUANTITY } from '../../../utils/materialSelectionUtils';
-import { MaterialDisplay, SelectedItem, UOM, MaterialUOMsMap } from '../../../../../types/materials';
+import { 
+  MaterialDisplay, 
+  SelectedItem, 
+  MaterialUOMsMap 
+} from '../../../../../types/materials';
 
 interface SelectedItemsRowsProps {
   selectedItems: SelectedItem[];
@@ -78,7 +82,7 @@ const SelectedItemsRows: React.FC<SelectedItemsRowsProps> = ({
                 sx={{ width: '120px' }}
               >
                 {materialId && materialUoms[materialId] ? 
-                  materialUoms[materialId].map((uom: UOM) => (
+                  materialUoms[materialId].map((uom) => (
                     <option key={uom.id} value={uom.id}>
                       {uom.name}
                     </option>
