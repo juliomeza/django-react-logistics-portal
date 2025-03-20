@@ -3,9 +3,6 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Paper, Typog
 import Grid from '@mui/material/Grid2';
 import AddressFormFields from './AddressFormFields';
 
-/**
- * Estructura de datos de dirección
- */
 interface AddressData {
   address_line_1: string;
   address_line_2: string;
@@ -15,9 +12,6 @@ interface AddressData {
   country: string;
 }
 
-/**
- * Estructura de datos para un nuevo contacto
- */
 interface NewContact {
   company_name: string;
   contact_name: string;
@@ -27,66 +21,21 @@ interface NewContact {
   billing_address: AddressData;
 }
 
-/**
- * Estructura de errores del formulario modal
- */
 interface ModalErrors {
-  [key: string]: string | boolean | undefined;
-  general?: string;
-  company_name?: string | boolean;
-  contact_name?: string | boolean;
-  phone?: string | boolean;
-  email?: string | boolean;
+  [key: string]: string | undefined;
 }
 
-/**
- * Props para el componente de formulario modal de contacto
- */
 interface ContactFormModalProps {
-  /**
-   * Estado de apertura del modal
-   */
   open: boolean;
-  
-  /**
-   * Manejador para cerrar el modal
-   */
   onClose: () => void;
-  
-  /**
-   * Datos del nuevo contacto
-   */
   newContact: NewContact;
-  
-  /**
-   * Errores de validación del formulario
-   */
   modalErrors: ModalErrors;
-  
-  /**
-   * Indica si la dirección de facturación es la misma que la de envío
-   */
   sameBillingAddress: boolean;
-  
-  /**
-   * Manejador de cambios en campos de texto
-   */
   handleNewContactChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, addressType?: string) => void;
-  
-  /**
-   * Manejador para cambiar el estado del checkbox de misma dirección
-   */
   handleSameAddressChange: (e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
-  
-  /**
-   * Manejador para guardar el nuevo contacto
-   */
   handleSaveNewContact: () => void;
 }
 
-/**
- * Componente para el formulario modal de creación de contactos
- */
 const ContactFormModal: React.FC<ContactFormModalProps> = ({
   open,
   onClose,
@@ -115,7 +64,7 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
                 onChange={handleNewContactChange}
                 fullWidth
                 error={!!modalErrors.company_name}
-                helperText={modalErrors.company_name ? 'Required' : ''}
+                helperText={modalErrors.company_name && 'Required'}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -126,7 +75,7 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
                 onChange={handleNewContactChange}
                 fullWidth
                 error={!!modalErrors.contact_name}
-                helperText={modalErrors.contact_name ? 'Required' : ''}
+                helperText={modalErrors.contact_name && 'Required'}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -137,7 +86,7 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
                 onChange={handleNewContactChange}
                 fullWidth
                 error={!!modalErrors.phone}
-                helperText={modalErrors.phone ? 'Required' : ''}
+                helperText={modalErrors.phone && 'Required'}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -147,8 +96,6 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
                 value={newContact.email}
                 onChange={handleNewContactChange}
                 fullWidth
-                error={!!modalErrors.email}
-                helperText={modalErrors.email ? 'Required' : ''}
               />
             </Grid>
           </Grid>
