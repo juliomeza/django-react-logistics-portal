@@ -3,36 +3,43 @@ import BasicOrderInfoStep from './BasicOrderInfoStep';
 import LogisticsInfoStep from './LogisticsInfoStep';
 import DeliveryInfoStep from './DeliveryInfoStep';
 import AdditionalInfoStep from './AdditionalInfoStep';
+import { OrderFormData, OrderType, OrderClass } from '../../../../types/orders';
+import { Project } from '../../../../types/enterprise';
+import { Warehouse, Carrier, CarrierService, Contact, Address } from '../../../../types/logistics';
 
 interface OrderDetailsFormProps {
-  formData: any;
+  formData: OrderFormData;
   handleChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-  orderTypes?: any[];
-  orderClasses?: any[];
-  warehouses?: any[];
-  projects?: any[];
-  carriers?: any[];
-  carrierServices?: any[];
-  contacts?: any[];
-  addresses?: any[];
-  formErrors?: { [key: string]: any };
+  orderTypes?: OrderType[];
+  orderClasses?: OrderClass[];
+  warehouses?: Warehouse[];
+  projects?: Project[];
+  carriers?: Carrier[];
+  carrierServices?: CarrierService[];
+  contacts?: Contact[];
+  addresses?: Address[];
+  formErrors?: Record<string, boolean>;
   isOrderLocked: boolean;
-  user: any;
+  user: {
+    id: number;
+    username: string;
+    [key: string]: any;
+  };
   refetchReferenceData: () => void;
 }
 
 const OrderDetailsForm: React.FC<OrderDetailsFormProps> = ({
   formData,
   handleChange,
-  orderTypes,
-  orderClasses,
-  warehouses,
-  projects,
-  carriers,
-  carrierServices,
-  contacts,
-  addresses,
-  formErrors,
+  orderTypes = [],
+  orderClasses = [],
+  warehouses = [],
+  projects = [],
+  carriers = [],
+  carrierServices = [],
+  contacts = [],
+  addresses = [],
+  formErrors = {},
   isOrderLocked,
   user,
   refetchReferenceData,
