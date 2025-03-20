@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { 
   enrichSelectedItems, 
   createInventoryOptions, 
-  EnrichedInventoryOption
+  EnrichedInventoryOption,
+  Material as UtilMaterial 
 } from '../utils/MaterialUtils';
 import { 
   getDisplayValues, 
@@ -10,28 +11,45 @@ import {
   validateOrderQuantity,
   Material as SelectionMaterial,
   Lot as SelectionLot,
-  LicensePlate as SelectionLP
+  LicensePlate as SelectionLP,
+  DEFAULT_QUANTITY
 } from '../utils/materialSelectionUtils';
 
-const DEFAULT_QUANTITY = 1;
+// Eliminamos la interfaz SelectedItem ya que no la estamos utilizando
+// y estamos usando any[] para selectedItems para mantener compatibilidad
+
+// Interfaces para los datos - Mantener compatibilidad con la versión original
+interface FormData {
+  selectedInventories?: any[];
+  project?: number;
+  [key: string]: unknown; // Para otras propiedades del formulario
+}
 
 // Interfaces para los datos
 interface UseMaterialSelectionProps {
-  formData: any;
-  setFormData: (data: any) => void;
-  inventories?: any[];
-  materials?: any[];
+  formData: FormData;
+  setFormData: (data: FormData | any[]) => void;
+  inventories?: EnrichedInventoryOption[];
+  materials?: UtilMaterial[];
 }
 
 // Interfaz extendida para uso interno en el hook
 interface MaterialGroupItem extends SelectionMaterial {
+  id: string;
+  material: number | string;
   availableQty: number;
+  uom?: number;
+  project?: number;
   inventoryItems: EnrichedInventoryOption[];
 }
 
 // Interfaz extendida para uso interno en el hook
 interface LotGroupItem extends SelectionLot {
+  id: string;
+  material: number | string;
   availableQty: number;
+  uom?: number;
+  project?: number;
   inventoryItems: EnrichedInventoryOption[];
 }
 
@@ -41,16 +59,19 @@ export const useMaterialSelection = ({
   inventories = [],
   materials = [],
 }: UseMaterialSelectionProps) => {
+  // Inicializar selectedItems directamente desde formData para mantener consistencia
   const [selectedItems, setSelectedItems] = useState<any[]>(formData.selectedInventories || []);
   const [currentMaterialSelection, setCurrentMaterialSelection] = useState<MaterialGroupItem | null>(null);
   const [currentLotSelection, setCurrentLotSelection] = useState<LotGroupItem | null>(null);
   const [currentLPSelection, setCurrentLPSelection] = useState<SelectionLP | null>(null);
   const [materialInputValue, setMaterialInputValue] = useState<string>('');
 
+  // UseEffect similar al original pero con tipado mejorado
   useEffect(() => {
     if (!selectedItems.length || selectedItems.length !== (formData.selectedInventories || []).length) {
       const enrichedItems = enrichSelectedItems(formData.selectedInventories, inventories, materials);
       if (enrichedItems) {
+        // Mantener el console.log como en el original para debugging
         console.log("Enriched items:", enrichedItems);
         setSelectedItems(enrichedItems);
       }
@@ -58,10 +79,11 @@ export const useMaterialSelection = ({
   }, [formData.selectedInventories, inventories, materials, selectedItems.length]);
 
   const inventoryOptions = useMemo(() => 
-    createInventoryOptions(inventories, materials),
+    createInventoryOptions(inventories as any, materials as any),
     [inventories, materials]
   );
 
+  // ... resto del código sin cambios ...
   const projectFilteredOptions = useMemo(() => (
     formData.project 
       ? inventoryOptions.filter((option) => option.project === formData.project)
@@ -69,6 +91,7 @@ export const useMaterialSelection = ({
   ), [formData.project, inventoryOptions]);
 
   const materialOptions = useMemo(() => {
+    // ... código existente ...
     const materialMap = new Map<string | number, MaterialGroupItem>();
     
     projectFilteredOptions.forEach((option) => {
@@ -81,8 +104,8 @@ export const useMaterialSelection = ({
           materialCode: option.materialCode || '',
           materialName: option.materialName || '',
           availableQty: 0,
-          uom: option.uom,
-          project: option.project,
+          uom: option.uom as number | undefined,
+          project: option.project as number | undefined,
           inventoryItems: []
         });
       }
@@ -113,8 +136,8 @@ export const useMaterialSelection = ({
           materialCode: item.materialCode || '',
           materialName: item.materialName || '',
           availableQty: 0,
-          uom: item.uom,
-          project: item.project,
+          uom: item.uom as number | undefined,
+          project: item.project as number | undefined,
           inventoryItems: []
         });
       }
@@ -153,7 +176,7 @@ export const useMaterialSelection = ({
     }, 0);
   };
 
-  // Esta versión debería combinar lo mejor de ambos enfoques
+  // Versión corregida de handleAddItem basada en el original pero con tipado mejorado
   const handleAddItem = (
     material: MaterialGroupItem, 
     lot: LotGroupItem | null, 
@@ -166,12 +189,12 @@ export const useMaterialSelection = ({
     const displayedAvailableQty = getAvailableQuantity(material, lot, lp);
     const validatedOrderQty = validateOrderQuantity(quantity, displayedAvailableQty);
     
-    // Se mantiene el formato original de ID y propiedades para evitar problemas con las búsquedas posteriores
+    // Construimos el nuevo item como en la versión original pero con tipado seguro
     const newItem = {
       id: lp ? lp.id : (lot ? lot.id : material.id),
       material: material.material,
       materialCode: displayValues.code,
-      materialName: displayValues.name,  // Crucial para mostrar el nombre en la revisión
+      materialName: displayValues.name,
       lot: displayValues.lot,
       license_plate: displayValues.licensePlate,
       licensePlate: displayValues.licensePlate,
@@ -185,15 +208,10 @@ export const useMaterialSelection = ({
     const updatedItems = [...selectedItems, newItem];
     setSelectedItems(updatedItems);
     
-    // TODO: REFACTORIZACIÓN PENDIENTE
-    // Este enfoque híbrido es una solución temporal para manejar inconsistencias en cómo 
-    // diferentes partes de la aplicación esperan recibir los datos.
-    // En una refactorización futura, estandarizar este comportamiento para que sea consistente.
-    
-    // Detectamos si el componente padre espera recibir directamente el array o un objeto con la propiedad
+    // Usamos la lógica original para detectar cómo actualizar formData
     const isDirectUpdate = typeof setFormData === 'function' && 
-                           (!formData.hasOwnProperty('selectedInventories') || 
-                            Array.isArray(formData.selectedInventories));
+                          (!formData.hasOwnProperty('selectedInventories') || 
+                           Array.isArray(formData.selectedInventories));
 
     if (isDirectUpdate) {
       // Pasamos directamente el array (como en la versión original)
@@ -211,9 +229,8 @@ export const useMaterialSelection = ({
       resetSelections();
     }, 50);
   };
-
-  // Aplicamos la misma lógica híbrida a los demás métodos
   
+  // Versión restaurada de handleQuantityChange con la lógica original
   const handleQuantityChange = (itemId: string | number, newQuantity: number): void => {
     const item = selectedItems.find((item) => item.id === itemId);
     if (!item) return;
@@ -228,11 +245,10 @@ export const useMaterialSelection = ({
     
     setSelectedItems(newSelectedItems);
     
-    // TODO: REFACTORIZACIÓN PENDIENTE
-    // Actualizar formData - VERSIÓN HÍBRIDA (ver comentario en handleAddItem)
+    // Usamos la lógica original
     const isDirectUpdate = typeof setFormData === 'function' && 
-                           (!formData.hasOwnProperty('selectedInventories') || 
-                            Array.isArray(formData.selectedInventories));
+                          (!formData.hasOwnProperty('selectedInventories') || 
+                           Array.isArray(formData.selectedInventories));
 
     if (isDirectUpdate) {
       setFormData(newSelectedItems);
@@ -244,6 +260,7 @@ export const useMaterialSelection = ({
     }
   };
 
+  // Versión restaurada de handleUomChange con la lógica original
   const handleUomChange = (itemId: string | number, newUomId: number | string): void => {
     const newSelectedItems = selectedItems.map((selectedItem) => 
       selectedItem.id === itemId 
@@ -253,11 +270,10 @@ export const useMaterialSelection = ({
     
     setSelectedItems(newSelectedItems);
     
-    // TODO: REFACTORIZACIÓN PENDIENTE
-    // Actualizar formData - VERSIÓN HÍBRIDA (ver comentario en handleAddItem)
+    // Usamos la lógica original
     const isDirectUpdate = typeof setFormData === 'function' && 
-                           (!formData.hasOwnProperty('selectedInventories') || 
-                            Array.isArray(formData.selectedInventories));
+                          (!formData.hasOwnProperty('selectedInventories') || 
+                           Array.isArray(formData.selectedInventories));
 
     if (isDirectUpdate) {
       setFormData(newSelectedItems);
@@ -269,16 +285,16 @@ export const useMaterialSelection = ({
     }
   };
 
+  // Versión restaurada de handleRemoveItem con la lógica original
   const handleRemoveItem = (itemId: string | number): void => {
     const updatedItems = selectedItems.filter((item) => item.id !== itemId);
     
     setSelectedItems(updatedItems);
     
-    // TODO: REFACTORIZACIÓN PENDIENTE
-    // Actualizar formData - VERSIÓN HÍBRIDA (ver comentario en handleAddItem)
+    // Usamos la lógica original
     const isDirectUpdate = typeof setFormData === 'function' && 
-                           (!formData.hasOwnProperty('selectedInventories') || 
-                            Array.isArray(formData.selectedInventories));
+                          (!formData.hasOwnProperty('selectedInventories') || 
+                           Array.isArray(formData.selectedInventories));
 
     if (isDirectUpdate) {
       setFormData(updatedItems);
