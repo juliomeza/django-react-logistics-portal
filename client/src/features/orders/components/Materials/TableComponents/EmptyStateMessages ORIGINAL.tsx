@@ -1,31 +1,9 @@
 import React from 'react';
 import { TableRow, TableCell, Typography } from '@mui/material';
 
-// Definimos una interfaz para los elementos seleccionados basada en el uso
-interface SelectedItem {
-  id: number | string;
-  material: number | string;
-  materialCode?: string;
-  materialName?: string;
-  lot?: string;
-  license_plate?: string;
-  licensePlate?: string;
-  availableQty?: number;
-  orderQuantity?: number;
-  uom?: number | string;
-}
-
-interface MaterialOption {
-  id: number;
-  material: number | string;
-  materialCode?: string;
-  materialName?: string;
-  availableQty?: number;
-}
-
 interface EmptyStateMessagesProps {
-  selectedItems: SelectedItem[];
-  materialOptions: MaterialOption[];
+  selectedItems: any[];
+  materialOptions: any[];
 }
 
 const EmptyStateMessages: React.FC<EmptyStateMessagesProps> = ({ selectedItems, materialOptions }) => {
