@@ -1,11 +1,12 @@
 import React from 'react';
 import { Paper, Typography, TextField } from '@mui/material';
 import Grid from '@mui/material/Grid2';
+import { OrderFormData } from '../../../../types/orders';
 
 interface AdditionalInfoStepProps {
-  formData: any;
+  formData: Pick<OrderFormData, 'notes'>;
   handleChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-  formErrors?: { [key: string]: any };
+  formErrors?: Record<string, boolean>;
 }
 
 const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
@@ -24,7 +25,7 @@ const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
             id="notes"
             label="Notes"
             name="notes"
-            value={formData.notes}
+            value={formData.notes || ''}
             onChange={handleChange}
             multiline
             rows={2}
