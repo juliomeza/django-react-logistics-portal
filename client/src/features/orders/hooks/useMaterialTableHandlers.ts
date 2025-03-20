@@ -1,6 +1,13 @@
 import { DEFAULT_QUANTITY } from '../utils/materialSelectionUtils';
 
-// Definición de un inventario de item para reemplazar el Array<any>
+// Interfaz base para selecciones con propiedades comunes
+interface BaseSelection {
+  id: string | number;
+  material: number;
+  availableQty?: number;
+}
+
+// Definición de un inventario de item
 interface InventoryItem {
   id: number;
   material: number;
@@ -14,15 +21,14 @@ interface InventoryItem {
 }
 
 // Interfaces para las selecciones de material
-interface MaterialSelection {
-  material: number;
+interface MaterialSelection extends BaseSelection {
   materialCode?: string;
   materialName?: string;
   availableQty: number;
   uom?: number;
   project?: number;
-  inventoryItems: InventoryItem[]; // Tipo específico en lugar de Array<any>
-  // Propiedades opcionales específicas en lugar del genérico [key: string]: any
+  inventoryItems: InventoryItem[];
+  // Propiedades opcionales específicas
   description?: string;
   type?: number;
   status?: number;
@@ -33,15 +39,12 @@ interface LotSelection extends MaterialSelection {
   lot: string;
 }
 
-interface LPSelection {
-  id: string | number;
-  material: number;
+interface LPSelection extends BaseSelection {
   lot?: string;
   license_plate?: string;
   licensePlate?: string;
   quantity: number;
-  availableQty?: number;
-  // Propiedades opcionales específicas en lugar del genérico [key: string]: any
+  // Propiedades opcionales específicas
   location?: string;
   warehouse?: number;
   vendor_lot?: string;
@@ -54,6 +57,11 @@ interface UseMaterialTableHandlersProps {
   handleAddItem: (material: MaterialSelection, lot: LotSelection | null, lp: LPSelection | null, quantity: number) => void;
 }
 
+interface UseMaterialTableHandlersReturn {
+  getCurrentAvailableQty: () => number;
+  handleAddButtonClick: () => void;
+}
+
 /**
  * Hook para manejar interacciones con la tabla de materiales
  */
@@ -62,7 +70,7 @@ export const useMaterialTableHandlers = ({
   currentLotSelection,
   currentLPSelection,
   handleAddItem,
-}: UseMaterialTableHandlersProps) => {
+}: UseMaterialTableHandlersProps): UseMaterialTableHandlersReturn => {
   /**
    * Obtiene la cantidad disponible actual basada en la selección
    */
@@ -70,18 +78,20 @@ export const useMaterialTableHandlers = ({
     if (currentLPSelection) {
       // Manejo seguro de la conversión de quantity a número
       const rawQuantity = currentLPSelection.quantity;
-      const lpQuantity = typeof rawQuantity === 'string' 
+      return typeof rawQuantity === 'string' 
         ? parseFloat(rawQuantity) || 0 
         : typeof rawQuantity === 'number' ? rawQuantity : 0;
-      
-      return lpQuantity;
-    } else if (currentLotSelection) {
-      return currentLotSelection.availableQty || 0;
-    } else if (currentMaterialSelection) {
-      return currentMaterialSelection.availableQty || 0;
-    } else {
-      return 0;
-    }
+    } 
+    
+    if (currentLotSelection) {
+      return currentLotSelection.availableQty;
+    } 
+    
+    if (currentMaterialSelection) {
+      return currentMaterialSelection.availableQty;
+    } 
+    
+    return 0;
   };
 
   /**
