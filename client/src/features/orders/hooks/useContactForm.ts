@@ -30,6 +30,11 @@ export interface ContactState extends Omit<Contact, 'id' | 'created_date' | 'mod
   billing_address: ContactFormAddress;
 }
 
+// Tipo específico para los errores del formulario
+export interface FormErrors {
+  [key: string]: boolean | string;
+}
+
 const initialContactState: ContactState = {
   company_name: '',
   contact_name: '',
@@ -61,6 +66,7 @@ const initialContactState: ContactState = {
   },
 };
 
+// Tipado más específico para los props
 interface UseContactFormProps {
   formData: OrderFormData;
   handleChange: (event: { target: { name: string; value: any } }) => void;
@@ -70,6 +76,7 @@ interface UseContactFormProps {
   refetchReferenceData: () => Promise<void>;
 }
 
+// Interfaz específica para la respuesta de la API al crear un contacto
 interface CreateContactResponse {
   shippingId: number;
   billingId: number;
@@ -88,7 +95,7 @@ export const useContactForm = ({
   const [openWarningDialog, setOpenWarningDialog] = useState<boolean>(false);
   const [newContact, setNewContact] = useState<ContactState>(initialContactState);
   const [sameBillingAddress, setSameBillingAddress] = useState<boolean>(true);
-  const [modalErrors, setModalErrors] = useState<{ [key: string]: boolean | string }>({});
+  const [modalErrors, setModalErrors] = useState<FormErrors>({});
 
   // Preservamos la estructura original de los datos mientras aplicamos el typecast
   // Esto mantiene la funcionalidad visual mientras corrige los errores de tipo
@@ -111,7 +118,12 @@ export const useContactForm = ({
     ? addresses.find((a: Address) => a.id === Number(formData.billing_address))
     : null;
 
-  const updateFormData = (contactId: string | number | null, shippingId: string | number | null, billingId: string | number | null): void => {
+  // Tipado más específico para los argumentos
+  const updateFormData = (
+    contactId: string | number | null, 
+    shippingId: string | number | null, 
+    billingId: string | number | null
+  ): void => {
     handleChange({ target: { name: 'contact', value: contactId } });
     handleChange({ target: { name: 'shipping_address', value: shippingId } });
     handleChange({ target: { name: 'billing_address', value: billingId } });
@@ -158,22 +170,29 @@ export const useContactForm = ({
     const { name, value } = e.target;
     
     if (addressType) {
-      setNewContact((prev) => ({
-        ...prev,
-        [addressType]: { ...prev[addressType], [name]: value },
-      }));
-
-      if (addressType === 'shipping_address' && sameBillingAddress) {
+      // TypeScript no puede inferir correctamente que name es una clave válida para ContactFormAddress
+      // así que hacemos un chequeo seguro
+      if (Object.keys(newContact[addressType]).includes(name)) {
         setNewContact((prev) => ({
           ...prev,
-          billing_address: { ...prev.billing_address, [name]: value },
+          [addressType]: { ...prev[addressType], [name]: value },
         }));
+
+        if (addressType === 'shipping_address' && sameBillingAddress) {
+          setNewContact((prev) => ({
+            ...prev,
+            billing_address: { ...prev.billing_address, [name]: value },
+          }));
+        }
       }
     } else {
-      setNewContact((prev) => ({
-        ...prev,
-        [name as keyof ContactState]: value,
-      }));
+      // Similar al anterior, verificamos que name sea una clave válida
+      if (Object.keys(newContact).includes(name)) {
+        setNewContact((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      }
     }
     
     setModalErrors((prev) => ({ ...prev, [name]: false }));
@@ -201,8 +220,9 @@ export const useContactForm = ({
     }
   };
 
+  // Retorno tipado para la función de validación
   const validateForm = (): boolean => {
-    const errors: { [key: string]: boolean | string } = {};
+    const errors: FormErrors = {};
     
     if (!newContact.company_name) errors.company_name = true;
     if (!newContact.contact_name) errors.contact_name = true;
@@ -218,10 +238,11 @@ export const useContactForm = ({
     return Object.keys(errors).length === 0;
   };
 
+  // Tipado específico para los errores
   const validateAddress = (
     address: ContactFormAddress, 
     prefix: string, 
-    errors: { [key: string]: boolean | string }
+    errors: FormErrors
   ): void => {
     if (!address.address_line_1) errors[`${prefix}_address_line_1`] = true;
     if (!address.city) errors[`${prefix}_city`] = true;
@@ -248,13 +269,15 @@ export const useContactForm = ({
       const { shippingId, billingId, newContactId } = await createContact(newContact, sameBillingAddress) as CreateContactResponse;
 
       try {
-        // Convertir los proyectos al formato esperado por assignContactToProject
-        const projectsWithContacts = projects.map(project => ({
+        // Tipado seguro para la conversión de proyectos
+        const projectsWithContacts: ApiProjectWithContacts[] = projects.map(project => ({
           id: project.id,
-          contacts: project.contacts?.map(contact => 
-            typeof contact === 'object' ? contact.id : contact
-          )
-        })) as ApiProjectWithContacts[];
+          contacts: Array.isArray(project.contacts) 
+            ? project.contacts.map(contact => 
+                typeof contact === 'object' && contact !== null ? contact.id : contact
+              )
+            : []
+        }));
 
         await assignContactToProject(newContactId, Number(formData.project), projectsWithContacts);
       } catch (error) {
@@ -269,14 +292,18 @@ export const useContactForm = ({
       setOpenModal(false);
       setNewContact(initialContactState);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error in save process:', error);
       
-      if (error.response) {
-        const errorMsg = error.response.data?.detail || 
-                        JSON.stringify(error.response.data) || 
+      // Manejo tipado de errores más específico
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { response?: { data?: any, status?: number } };
+        
+        const errorMsg = apiError.response?.data?.detail || 
+                        (apiError.response?.data ? JSON.stringify(apiError.response.data) : null) || 
                         'Unknown error';
-        console.error('API error details:', error.response);
+                        
+        console.error('API error details:', apiError.response);
         setModalErrors({ general: `Failed to save: ${errorMsg}` });
       } else {
         setModalErrors({ general: 'Failed to save: Network or server error' });
