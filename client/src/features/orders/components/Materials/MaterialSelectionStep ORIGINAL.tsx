@@ -2,45 +2,15 @@ import React from 'react';
 import { Paper, Typography, Box, CircularProgress } from '@mui/material';
 import MaterialTable from './MaterialTable';
 import { useMaterialSelection } from '../../hooks/useMaterialSelection';
-import { UOM } from '../../../../types/materials';
-import { 
-  EnrichedInventoryOption, 
-  Material as UtilMaterial,
-  SelectedInventoryItem 
-} from '../../utils/MaterialUtils';
-import { FormState } from '../../reducers/formReducer';
 
-// Define exactamente lo que espera useMaterialSelection
-interface MaterialSelectionFormData {
-  selectedInventories?: SelectedInventoryItem[];
-  project?: number;
-  [key: string]: unknown;
-}
-
-// Interface para las props del componente, que acepta FormState
 interface MaterialSelectionStepProps {
-  formData: FormState | any;
+  formData: any;
   setFormData: (data: any) => void;
-  inventories?: EnrichedInventoryOption[];
-  materials?: UtilMaterial[];
+  inventories?: any[];
+  materials?: any[];
   loading?: boolean;
-  materialUoms?: { [materialId: string]: UOM };
+  materialUoms?: { [key: string]: any };
 }
-
-// Función adaptadora para convertir FormState a MaterialSelectionFormData
-const adaptFormData = (data: any): MaterialSelectionFormData => {
-  const result: MaterialSelectionFormData = { ...data };
-  
-  // Convertir project a número si es string y es un número válido
-  if (typeof data.project === 'string') {
-    const projectNumber = parseInt(data.project, 10);
-    if (!isNaN(projectNumber)) {
-      result.project = projectNumber;
-    }
-  }
-  
-  return result;
-};
 
 const MaterialSelectionStep: React.FC<MaterialSelectionStepProps> = ({
   formData,
@@ -50,9 +20,6 @@ const MaterialSelectionStep: React.FC<MaterialSelectionStepProps> = ({
   loading = false,
   materialUoms = {}
 }) => {
-  // Adaptar formData al formato que espera useMaterialSelection
-  const adaptedFormData = adaptFormData(formData);
-  
   const {
     selectedItems,
     materialOptions,
@@ -72,7 +39,7 @@ const MaterialSelectionStep: React.FC<MaterialSelectionStepProps> = ({
     handleUomChange,
     handleRemoveItem
   } = useMaterialSelection({
-    formData: adaptedFormData,
+    formData,
     setFormData,
     inventories,
     materials
@@ -99,7 +66,9 @@ const MaterialSelectionStep: React.FC<MaterialSelectionStepProps> = ({
           <MaterialTable 
             selectedItems={selectedItems}
             materials={materials}
-            handleQuantityChange={handleQuantityChange as (itemId: any, newQuantity: string | number) => void}
+            handleQuantityChange={
+              handleQuantityChange as unknown as (itemId: any, newQuantity: string | number) => void
+            }
             handleUomChange={handleUomChange}
             handleRemoveItem={handleRemoveItem}
             availableOptions={materialOptions}
