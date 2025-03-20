@@ -5,27 +5,54 @@ import SelectedItemsRows from './TableComponents/SelectedItemsRows';
 import CascadeSearchRow from './TableComponents/CascadeSearchRow';
 import EmptyStateMessages from './TableComponents/EmptyStateMessages';
 import { useMaterialTableHandlers } from '../../hooks/useMaterialTableHandlers';
+import { UOM } from '../../../../types/materials';
+import { 
+  Material as UtilMaterial,
+  SelectedInventoryItem
+} from '../../utils/MaterialUtils';
+
+// Interfaces para adaptar tipos entre los componentes
+// Estas interfaces coinciden con las de los componentes hijos
+interface SelectedItem {
+  id: number | string;
+  material: number;
+  materialCode?: string;
+  materialName?: string;
+  lot?: string;
+  license_plate?: string;
+  licensePlate?: string;
+  availableQty: number;
+  orderQuantity?: number;
+  uom?: number | string;
+}
+
+interface MaterialOption {
+  id: number;
+  material: number;
+  materialCode?: string;
+  materialName?: string;
+}
 
 interface MaterialTableProps {
-  selectedItems: any[];
-  materials: any[];
-  handleQuantityChange: (itemId: any, newQuantity: string | number) => void;
-  handleUomChange: (itemId: any, newUom: any) => void;
-  handleRemoveItem: (itemId: any) => void;
-  availableOptions: any;
-  materialOptions: any;
-  lotOptions: any;
-  lpOptions: any;
-  currentMaterialSelection: any;
-  currentLotSelection: any;
-  currentLPSelection: any;
-  setCurrentMaterialSelection: (value: any) => void;
-  setCurrentLotSelection: (value: any) => void;
-  setCurrentLPSelection: (value: any) => void;
+  selectedItems: SelectedInventoryItem[];
+  materials: UtilMaterial[];
+  handleQuantityChange: (itemId: string | number, newQuantity: string | number) => void;
+  handleUomChange: (itemId: string | number, newUom: string | number) => void;
+  handleRemoveItem: (itemId: string | number) => void;
+  availableOptions: any[];
+  materialOptions: any[];
+  lotOptions: any[];
+  lpOptions: any[];
+  currentMaterialSelection: any | null;
+  currentLotSelection: any | null;
+  currentLPSelection: any | null;
+  setCurrentMaterialSelection: (value: any | null) => void;
+  setCurrentLotSelection: (value: any | null) => void;
+  setCurrentLPSelection: (value: any | null) => void;
   inputValue: string;
   setInputValue: (value: string) => void;
-  handleAddItem: (material: any, lot?: any, lp?: any, quantity?: number) => void;
-  materialUoms?: { [key: string]: any };
+  handleAddItem: (material: any, lot?: any | null, lp?: any | null, quantity?: number) => void;
+  materialUoms?: { [key: string]: UOM };
 }
 
 const MaterialTable: React.FC<MaterialTableProps> = ({
@@ -49,6 +76,7 @@ const MaterialTable: React.FC<MaterialTableProps> = ({
   handleAddItem,
   materialUoms = {}
 }) => {
+  // Usamos los parámetros directamente, sin adaptarlos
   const { getCurrentAvailableQty, handleAddButtonClick } = useMaterialTableHandlers({
     currentMaterialSelection,
     currentLotSelection,
@@ -56,22 +84,25 @@ const MaterialTable: React.FC<MaterialTableProps> = ({
     handleAddItem
   });
 
+  // Adaptamos materialUoms para el componente SelectedItemsRows
+  const adaptedMaterialUoms = materialUoms as unknown as { [key: string]: UOM[] };
+
   return (
     <TableContainer sx={{ mb: 3 }}>
       <Table size="small">
         <TableHeader />
         <TableBody>
           <SelectedItemsRows 
-            selectedItems={selectedItems}
-            materials={materials}
-            handleQuantityChange={handleQuantityChange as (itemId: any, newQuantity: string | number) => void}
+            selectedItems={selectedItems as unknown as SelectedItem[]}
+            materials={materials as any[]}
+            handleQuantityChange={handleQuantityChange}
             handleUomChange={handleUomChange}
             handleRemoveItem={handleRemoveItem}
-            materialUoms={materialUoms}
+            materialUoms={adaptedMaterialUoms}
           />
           
           <CascadeSearchRow 
-            materialOptions={materialOptions}
+            materialOptions={materialOptions as unknown as MaterialOption[]}
             lotOptions={lotOptions}
             lpOptions={lpOptions}
             currentMaterialSelection={currentMaterialSelection}
@@ -83,13 +114,13 @@ const MaterialTable: React.FC<MaterialTableProps> = ({
             inputValue={inputValue}
             setInputValue={setInputValue}
             getCurrentAvailableQty={getCurrentAvailableQty}
-            materialUoms={materialUoms}
+            materialUoms={adaptedMaterialUoms}
             handleAddButtonClick={handleAddButtonClick}
           />
           
           <EmptyStateMessages 
-            selectedItems={selectedItems}
-            materialOptions={materialOptions}
+            selectedItems={selectedItems as unknown as SelectedItem[]}
+            materialOptions={materialOptions as MaterialOption[]}
           />
         </TableBody>
       </Table>
