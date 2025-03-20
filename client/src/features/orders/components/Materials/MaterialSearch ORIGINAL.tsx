@@ -2,22 +2,13 @@ import React from 'react';
 import { TableCell, TableRow, TextField, IconButton, Autocomplete } from '@mui/material';
 import { Add } from '@mui/icons-material';
 
-// Interfaz para las opciones de material disponibles
-interface MaterialOption {
-  id: number;
-  materialCode?: string;
-  materialName?: string;
-  lookup_code?: string;
-  name?: string;
-}
-
 interface MaterialSearchProps {
-  availableOptions: MaterialOption[];
-  currentSelection: MaterialOption | null;
+  availableOptions: any[];
+  currentSelection: any;
   inputValue: string;
   setInputValue: (value: string) => void;
-  handleAddItem: (item: MaterialOption | null) => void;
-  setCurrentSelection: (value: MaterialOption | null) => void;
+  handleAddItem: (item: any) => void;
+  setCurrentSelection: (value: any) => void;
 }
 
 const MaterialSearch: React.FC<MaterialSearchProps> = ({
