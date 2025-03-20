@@ -4,42 +4,13 @@ import { Delete } from '@mui/icons-material';
 import { formatQuantity } from '../../../utils/MaterialUtils';
 import { DEFAULT_QUANTITY } from '../../../utils/materialSelectionUtils';
 
-// Interfaz para el Material
-interface Material {
-  id: number;
-  lookup_code?: string;
-  name?: string;
-  uom?: number | string;
-}
-
-// Interfaz para la unidad de medida
-interface UOM {
-  id: number;
-  name: string;
-  lookup_code?: string;
-}
-
-// Interfaz para los elementos seleccionados
-interface SelectedItem {
-  id: number | string;
-  material: number;
-  materialCode?: string;
-  materialName?: string;
-  lot?: string;
-  license_plate?: string;
-  licensePlate?: string;
-  availableQty: number;
-  orderQuantity?: number;
-  uom?: number | string;
-}
-
 interface SelectedItemsRowsProps {
-  selectedItems: SelectedItem[];
-  materials: Material[];
-  handleQuantityChange: (itemId: number | string, newQuantity: number | string) => void;
-  handleUomChange: (itemId: number | string, newUom: number | string) => void;
-  handleRemoveItem: (itemId: number | string) => void;
-  materialUoms: { [key: string]: UOM[] };
+  selectedItems: any[];
+  materials: any[];
+  handleQuantityChange: (itemId: any, newQuantity: number | string) => void;
+  handleUomChange: (itemId: any, newUom: any) => void;
+  handleRemoveItem: (itemId: any) => void;
+  materialUoms: { [key: string]: any };
 }
 
 const SelectedItemsRows: React.FC<SelectedItemsRowsProps> = ({
@@ -58,8 +29,6 @@ const SelectedItemsRows: React.FC<SelectedItemsRowsProps> = ({
     <>
       {selectedItems.map((item) => {
         const material = materials.find((m) => m.id === item.material);
-        const materialId = material?.id?.toString(); // Convertir a string para asegurar que se puede usar como índice
-        
         return (
           <TableRow key={item.id}>
             <TableCell>{item.materialCode || material?.lookup_code || '-'}</TableCell>
@@ -105,8 +74,8 @@ const SelectedItemsRows: React.FC<SelectedItemsRowsProps> = ({
                 }}
                 sx={{ width: '120px' }}
               >
-                {materialId && materialUoms[materialId] ? 
-                  materialUoms[materialId].map((uom: UOM) => (
+                {materialUoms[material?.id] ? 
+                  materialUoms[material?.id].map((uom: any) => (
                     <option key={uom.id} value={uom.id}>
                       {uom.name}
                     </option>
