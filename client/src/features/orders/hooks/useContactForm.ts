@@ -30,10 +30,38 @@ export interface ContactState extends Omit<Contact, 'id' | 'created_date' | 'mod
   billing_address: ContactFormAddress;
 }
 
-// Tipo específico para los errores del formulario
+// Tipo específico para los errores del formulario con valores posibles
 export interface FormErrors {
-  [key: string]: boolean | string;
+  company_name?: boolean | string;
+  contact_name?: boolean | string;
+  phone?: boolean | string;
+  email?: boolean | string;
+  shipping_address_address_line_1?: boolean | string;
+  shipping_address_city?: boolean | string;
+  shipping_address_state?: boolean | string;
+  shipping_address_postal_code?: boolean | string;
+  shipping_address_country?: boolean | string;
+  billing_address_address_line_1?: boolean | string;
+  billing_address_city?: boolean | string;
+  billing_address_state?: boolean | string;
+  billing_address_postal_code?: boolean | string;
+  billing_address_country?: boolean | string;
+  general?: string;
+  [key: string]: boolean | string | undefined;
 }
+
+// Lista de claves conocidas en ContactState para validación segura
+const contactStateKeys: Array<keyof ContactState> = [
+  'company_name', 'contact_name', 'attention', 'phone', 
+  'email', 'mobile', 'title', 'notes',
+  'shipping_address', 'billing_address'
+];
+
+// Lista de claves conocidas en ContactFormAddress para validación segura
+const addressKeys: Array<keyof ContactFormAddress> = [
+  'address_line_1', 'address_line_2', 'city', 'state',
+  'postal_code', 'country', 'entity_type', 'address_type'
+];
 
 const initialContactState: ContactState = {
   company_name: '',
@@ -170,9 +198,8 @@ export const useContactForm = ({
     const { name, value } = e.target;
     
     if (addressType) {
-      // TypeScript no puede inferir correctamente que name es una clave válida para ContactFormAddress
-      // así que hacemos un chequeo seguro
-      if (Object.keys(newContact[addressType]).includes(name)) {
+      // Verificar si el nombre es una clave válida para ContactFormAddress
+      if (addressKeys.includes(name as keyof ContactFormAddress)) {
         setNewContact((prev) => ({
           ...prev,
           [addressType]: { ...prev[addressType], [name]: value },
@@ -186,8 +213,8 @@ export const useContactForm = ({
         }
       }
     } else {
-      // Similar al anterior, verificamos que name sea una clave válida
-      if (Object.keys(newContact).includes(name)) {
+      // Verificar si el nombre es una clave válida para ContactState
+      if (contactStateKeys.includes(name as keyof ContactState)) {
         setNewContact((prev) => ({
           ...prev,
           [name]: value,
@@ -195,6 +222,7 @@ export const useContactForm = ({
       }
     }
     
+    // Limpiar el error correspondiente
     setModalErrors((prev) => ({ ...prev, [name]: false }));
   };
 
@@ -266,20 +294,25 @@ export const useContactForm = ({
     }
 
     try {
-      const { shippingId, billingId, newContactId } = await createContact(newContact, sameBillingAddress) as CreateContactResponse;
+      const result = await createContact(newContact, sameBillingAddress);
+      const { shippingId, billingId, newContactId } = result as CreateContactResponse;
 
       try {
-        // Tipado seguro para la conversión de proyectos
-        const projectsWithContacts: ApiProjectWithContacts[] = projects.map(project => ({
-          id: project.id,
-          contacts: Array.isArray(project.contacts) 
-            ? project.contacts.map(contact => 
-                typeof contact === 'object' && contact !== null ? contact.id : contact
-              )
-            : []
-        }));
+        if (formData.project) {
+          // Tipado seguro para la conversión de proyectos
+          const projectsWithContacts: ApiProjectWithContacts[] = projects.map(project => ({
+            id: project.id,
+            contacts: Array.isArray(project.contacts) 
+              ? project.contacts.map(contact => 
+                  typeof contact === 'object' && contact !== null ? contact.id : contact
+                )
+              : []
+          }));
 
-        await assignContactToProject(newContactId, Number(formData.project), projectsWithContacts);
+          await assignContactToProject(newContactId, Number(formData.project), projectsWithContacts);
+        } else {
+          throw new Error('No project selected');
+        }
       } catch (error) {
         console.warn('Error al asignar contacto al proyecto:', error);
         setModalErrors({ general: 'Contact created, but could not be assigned to project' });
