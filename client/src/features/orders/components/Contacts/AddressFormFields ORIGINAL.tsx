@@ -2,9 +2,6 @@ import React from 'react';
 import { TextField } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 
-/**
- * Estructura de datos de dirección
- */
 interface AddressData {
   address_line_1: string;
   address_line_2: string;
@@ -14,29 +11,11 @@ interface AddressData {
   country: string;
 }
 
-/**
- * Props para el componente de campos del formulario de dirección
- */
 interface AddressFormFieldsProps {
-  /**
-   * Tipo de dirección (ej: 'shipping_address', 'billing_address')
-   */
   addressType: string;
-  
-  /**
-   * Datos de la dirección actual
-   */
   addressData: AddressData;
-  
-  /**
-   * Manejador de cambios para los campos
-   */
   onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, addressType: string) => void;
-  
-  /**
-   * Errores de validación por campo
-   */
-  errors: Record<string, boolean | string | undefined>;
+  errors: { [key: string]: any };
 }
 
 const AddressFormFields: React.FC<AddressFormFieldsProps> = ({ 
@@ -57,7 +36,7 @@ const AddressFormFields: React.FC<AddressFormFieldsProps> = ({
           onChange={(e) => onChange(e, addressType)}
           fullWidth
           error={!!errors[`${errorPrefix}address_line_1`]}
-          helperText={errors[`${errorPrefix}address_line_1`] ? 'Required' : ''}
+          helperText={errors[`${errorPrefix}address_line_1`] && 'Required'}
         />
       </Grid>
       <Grid size={{ xs: 12 }}>
@@ -77,7 +56,7 @@ const AddressFormFields: React.FC<AddressFormFieldsProps> = ({
           onChange={(e) => onChange(e, addressType)}
           fullWidth
           error={!!errors[`${errorPrefix}city`]}
-          helperText={errors[`${errorPrefix}city`] ? 'Required' : ''}
+          helperText={errors[`${errorPrefix}city`] && 'Required'}
         />
       </Grid>
       <Grid size={{ xs: 6 }}>
@@ -88,7 +67,7 @@ const AddressFormFields: React.FC<AddressFormFieldsProps> = ({
           onChange={(e) => onChange(e, addressType)}
           fullWidth
           error={!!errors[`${errorPrefix}state`]}
-          helperText={errors[`${errorPrefix}state`] ? 'Required' : ''}
+          helperText={errors[`${errorPrefix}state`] && 'Required'}
         />
       </Grid>
       <Grid size={{ xs: 6 }}>
@@ -99,7 +78,7 @@ const AddressFormFields: React.FC<AddressFormFieldsProps> = ({
           onChange={(e) => onChange(e, addressType)}
           fullWidth
           error={!!errors[`${errorPrefix}postal_code`]}
-          helperText={errors[`${errorPrefix}postal_code`] ? 'Required' : ''}
+          helperText={errors[`${errorPrefix}postal_code`] && 'Required'}
         />
       </Grid>
       <Grid size={{ xs: 6 }}>
@@ -110,7 +89,7 @@ const AddressFormFields: React.FC<AddressFormFieldsProps> = ({
           onChange={(e) => onChange(e, addressType)}
           fullWidth
           error={!!errors[`${errorPrefix}country`]}
-          helperText={errors[`${errorPrefix}country`] ? 'Required' : ''}
+          helperText={errors[`${errorPrefix}country`] && 'Required'}
         />
       </Grid>
     </Grid>
