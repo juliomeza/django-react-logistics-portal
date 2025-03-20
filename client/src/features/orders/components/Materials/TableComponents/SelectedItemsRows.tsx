@@ -6,7 +6,8 @@ import { DEFAULT_QUANTITY } from '../../../utils/materialSelectionUtils';
 import { 
   MaterialDisplay, 
   SelectedItem, 
-  MaterialUOMsMap 
+  MaterialUOMsMap,
+  UOM
 } from '../../../../../types/materials';
 
 interface SelectedItemsRowsProps {
@@ -34,7 +35,7 @@ const SelectedItemsRows: React.FC<SelectedItemsRowsProps> = ({
     <>
       {selectedItems.map((item) => {
         const material = materials.find((m) => m.id === item.material);
-        const materialId = material?.id?.toString(); // Convertir a string para asegurar que se puede usar como índice
+        const materialId = material?.id?.toString() || '';
         
         return (
           <TableRow key={item.id}>
@@ -49,7 +50,7 @@ const SelectedItemsRows: React.FC<SelectedItemsRowsProps> = ({
                 value={item.orderQuantity || DEFAULT_QUANTITY}
                 onChange={(e) => {
                   const val = e.target.value === '' ? '' : Number(e.target.value);
-                  if (val === '' || !isNaN(val)) {
+                  if (val === '' || !isNaN(Number(val))) {
                     handleQuantityChange(item.id, val);
                   }
                 }}
@@ -74,7 +75,9 @@ const SelectedItemsRows: React.FC<SelectedItemsRowsProps> = ({
                 size="small"
                 value={item.uom || material?.uom || ''}
                 onChange={(e) => {
-                  handleUomChange && handleUomChange(item.id, e.target.value);
+                  if (handleUomChange) {
+                    handleUomChange(item.id, e.target.value);
+                  }
                 }}
                 SelectProps={{
                   native: true,
@@ -82,7 +85,7 @@ const SelectedItemsRows: React.FC<SelectedItemsRowsProps> = ({
                 sx={{ width: '120px' }}
               >
                 {materialId && materialUoms[materialId] ? 
-                  materialUoms[materialId].map((uom) => (
+                  materialUoms[materialId].map((uom: UOM) => (
                     <option key={uom.id} value={uom.id}>
                       {uom.name}
                     </option>

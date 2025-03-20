@@ -43,6 +43,20 @@ const CascadeSearchRow: React.FC<CascadeSearchRowProps> = ({
   materialUoms,
   handleAddButtonClick
 }) => {
+  // Helper to get the UOM name from the material selection
+  const getUomName = (): string => {
+    if (!currentMaterialSelection) return 'Each';
+    
+    const materialId = currentMaterialSelection.material.toString();
+    const uoms = materialUoms[materialId];
+    
+    if (uoms && uoms.length > 0) {
+      return uoms[0].name;
+    }
+    
+    return 'Each';
+  };
+
   return (
     <TableRow>
       {/* Búsqueda de material - primer nivel de cascada */}
@@ -105,7 +119,6 @@ const CascadeSearchRow: React.FC<CascadeSearchRowProps> = ({
           options={lpOptions}
           value={currentLPSelection}
           onChange={(event, newValue) => {
-            console.log("Selected LP:", newValue);
             setCurrentLPSelection(newValue);
           }}
           disabled={!currentLotSelection}
@@ -153,11 +166,7 @@ const CascadeSearchRow: React.FC<CascadeSearchRowProps> = ({
       
       {/* UOM - mostrar UOM basado en el material seleccionado */}
       <TableCell align="center">
-        {currentMaterialSelection && (
-          materialUoms[currentMaterialSelection.material] ? 
-            materialUoms[currentMaterialSelection.material][0]?.name : 
-            'Each'
-        )}
+        {currentMaterialSelection && getUomName()}
       </TableCell>
       
       {/* Botón Agregar - solo requiere selección de material */}

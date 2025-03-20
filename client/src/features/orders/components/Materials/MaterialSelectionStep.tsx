@@ -2,7 +2,9 @@ import React from 'react';
 import { Paper, Typography, Box, CircularProgress } from '@mui/material';
 import MaterialTable from './MaterialTable';
 import { useMaterialSelection } from '../../hooks/useMaterialSelection';
-import { UOM } from '../../../../types/materials';
+import { 
+  UOM
+} from '../../../../types/materials';
 import { 
   EnrichedInventoryOption, 
   Material as UtilMaterial,
@@ -10,34 +12,35 @@ import {
 } from '../../utils/MaterialUtils';
 import { FormState } from '../../reducers/formReducer';
 
-// Define exactamente lo que espera useMaterialSelection
-interface MaterialSelectionFormData {
+// Para entender mejor el tipo que espera useMaterialSelection
+// Si tienes acceso al tipo FormData que usa useMaterialSelection, 
+// sería mejor importarlo directamente
+interface FormData {
   selectedInventories?: SelectedInventoryItem[];
-  project?: number;
+  project?: number;  // Aquí project es number
   [key: string]: unknown;
 }
 
-// Interface para las props del componente, que acepta FormState
+// Interface para las props del componente
 interface MaterialSelectionStepProps {
-  formData: FormState | any;
-  setFormData: (data: any) => void;
+  formData: FormState;
+  setFormData: (data: any) => void;  // Usamos any para mantener compatibilidad
   inventories?: EnrichedInventoryOption[];
   materials?: UtilMaterial[];
   loading?: boolean;
-  materialUoms?: { [materialId: string]: UOM };
+  materialUoms?: { [materialId: string]: UOM[] };
 }
 
-// Función adaptadora para convertir FormState a MaterialSelectionFormData
-const adaptFormData = (data: any): MaterialSelectionFormData => {
-  const result: MaterialSelectionFormData = { ...data };
-  
-  // Convertir project a número si es string y es un número válido
-  if (typeof data.project === 'string') {
-    const projectNumber = parseInt(data.project, 10);
-    if (!isNaN(projectNumber)) {
-      result.project = projectNumber;
-    }
-  }
+// Función adaptadora para convertir FormState a FormData
+const adaptFormData = (data: FormState): FormData => {
+  // En vez de hacer spread, creamos un objeto del tipo correcto
+  const result: FormData = {
+    selectedInventories: data.selectedInventories,
+    // Convertimos explícitamente project a número si es posible
+    project: typeof data.project === 'string' ? 
+      (isNaN(Number(data.project)) ? undefined : Number(data.project)) : 
+      data.project as number | undefined
+  };
   
   return result;
 };
@@ -52,6 +55,11 @@ const MaterialSelectionStep: React.FC<MaterialSelectionStepProps> = ({
 }) => {
   // Adaptar formData al formato que espera useMaterialSelection
   const adaptedFormData = adaptFormData(formData);
+  
+  // Adaptamos el setFormData para que tenga el tipo correcto 
+  const adaptedSetFormData = (data: any) => {
+    setFormData(data);
+  };
   
   const {
     selectedItems,
@@ -72,11 +80,23 @@ const MaterialSelectionStep: React.FC<MaterialSelectionStepProps> = ({
     handleUomChange,
     handleRemoveItem
   } = useMaterialSelection({
-    formData: adaptedFormData,
-    setFormData,
+    formData: adaptedFormData as any, // Forzamos el tipo para evitar errores
+    setFormData: adaptedSetFormData,
     inventories,
     materials
   });
+
+  // Adaptamos handleQuantityChange para que acepte string | number
+  const adaptedHandleQuantityChange = (
+    itemId: string | number, 
+    newQuantity: string | number
+  ) => {
+    // Si newQuantity es string, convertirlo a número
+    const numberQuantity = typeof newQuantity === 'string' ? 
+      Number(newQuantity) : newQuantity;
+    
+    handleQuantityChange(itemId, numberQuantity);
+  };
 
   return (
     <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
@@ -99,7 +119,7 @@ const MaterialSelectionStep: React.FC<MaterialSelectionStepProps> = ({
           <MaterialTable 
             selectedItems={selectedItems}
             materials={materials}
-            handleQuantityChange={handleQuantityChange as (itemId: any, newQuantity: string | number) => void}
+            handleQuantityChange={adaptedHandleQuantityChange}
             handleUomChange={handleUomChange}
             handleRemoveItem={handleRemoveItem}
             availableOptions={materialOptions}
@@ -115,7 +135,7 @@ const MaterialSelectionStep: React.FC<MaterialSelectionStepProps> = ({
             inputValue={materialInputValue}
             setInputValue={setMaterialInputValue}
             handleAddItem={handleAddItem}
-            materialUoms={materialUoms}
+            materialUoms={materialUoms as any}  // Forzamos el tipo para resolver el error
           />
           
           <Box sx={{ mt: 2 }}>
