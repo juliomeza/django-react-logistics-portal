@@ -2,6 +2,12 @@
 
 A complete authentication and order management system using Django REST Framework for the backend and React for the frontend. It features JWT authentication with secure HttpOnly cookie-based storage and PostgreSQL as the database.
 
+## Requirements
+
+- Python **3.10.11**
+- Node.js **18.x**
+- PostgreSQL **15.x**
+
 ## Features
 
 - JWT authentication with secure httpOnly cookie storage
