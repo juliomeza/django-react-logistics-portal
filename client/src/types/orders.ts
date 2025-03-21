@@ -163,6 +163,25 @@ export interface OrderFormData {
 }
 
 /**
+ * Datos de orden para visualización en el componente OrderSummary
+ */
+export interface OrderData {
+  order_type: number | string;
+  order_class: number | string;
+  lookup_code_order: string;
+  reference_number?: string;
+  warehouse: number | string;
+  project: number | string;
+  carrier?: number | string;
+  service_type?: number | string;
+  contact: number | string;
+  expected_delivery_date?: string;
+  shipping_address: number | string;
+  billing_address: number | string;
+  notes?: string;
+}
+
+/**
  * Errores de validación para el formulario de órdenes
  */
 export interface OrderValidationErrors {

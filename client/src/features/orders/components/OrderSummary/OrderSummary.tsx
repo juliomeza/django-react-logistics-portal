@@ -1,16 +1,34 @@
 import React from 'react';
-import { Paper, Typography, Divider } from '@mui/material';
-import { findItemById, displayValue } from '../../utils/displayUtils';
+import { Paper, Typography, Divider, SxProps, Theme } from '@mui/material';
+import { displayValue } from '../../utils/displayUtils';
 import OrderSummarySection from './OrderSummarySection';
 import InfoItem from './InfoItem';
 import MaterialsTable from './MaterialsTable';
+import { OrderData, OrderType, OrderClass } from '../../../../types/orders';
+import { Warehouse, Contact, Address, Carrier, CarrierService } from '../../../../types/logistics';
+import { Project } from '../../../../types/enterprise';
+import { Material, SelectedItem } from '../../../../types/materials';
+
+// Interfaz para datos de referencia
+interface ReferenceData {
+  orderTypes: Array<OrderType | any>;
+  orderClasses: Array<OrderClass | any>;
+  warehouses: Array<Warehouse | any>;
+  projects: Array<Project | any>;
+  carriers: Array<Carrier | any>;
+  carrierServices: Array<CarrierService | any>;
+  contacts?: Array<Contact | any>;
+  addresses?: Array<Address | any>;
+  data?: any; // Para manejar referencias anidadas como referenceData.data
+}
 
 interface OrderSummaryProps {
-  orderData: any;
-  referenceData: any;
-  materials?: any[];
-  materialItems?: any[];
+  orderData: OrderData;
+  referenceData: ReferenceData;
+  materials?: Array<Material | any>;
+  materialItems?: Array<SelectedItem | any>;
   isReviewMode?: boolean;
+  sx?: SxProps<Theme>;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -19,27 +37,63 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   materials = [],
   materialItems = [],
   isReviewMode = false,
+  sx,
 }) => {
   // Helpers para obtener nombres de referencia
-  const getOrderTypeName = () =>
-    findItemById(referenceData.orderTypes, orderData.order_type, 'type_name');
-  const getOrderClassName = () =>
-    findItemById(referenceData.orderClasses, orderData.order_class, 'class_name');
-  const getWarehouseName = () =>
-    findItemById(referenceData.warehouses, orderData.warehouse, 'name');
-  const getProjectName = () =>
-    findItemById(referenceData.projects, orderData.project, 'name');
-  const getCarrierName = () =>
-    findItemById(referenceData.carriers, orderData.carrier, 'name');
-  const getServiceName = () =>
-    findItemById(referenceData.carrierServices, orderData.service_type, 'name');
-  const getMaterialName = (id: any) =>
-    findItemById(materials, id, 'name');
+  const getOrderTypeName = () => {
+    // Solución manual para evitar problemas de tipado
+    const item = referenceData.orderTypes.find(
+      type => type.id === orderData.order_type
+    );
+    return item?.type_name || 'Unknown';
+  };
+
+  const getOrderClassName = () => {
+    const item = referenceData.orderClasses.find(
+      cls => cls.id === orderData.order_class
+    );
+    return item?.class_name || 'Unknown';
+  };
+
+  const getWarehouseName = () => {
+    const item = referenceData.warehouses.find(
+      wh => wh.id === orderData.warehouse
+    );
+    return item?.name || 'Unknown';
+  };
+
+  const getProjectName = () => {
+    const item = referenceData.projects.find(
+      proj => proj.id === orderData.project
+    );
+    return item?.name || 'Unknown';
+  };
+
+  const getCarrierName = () => {
+    if (!orderData.carrier) return 'Not specified';
+    const item = referenceData.carriers.find(
+      carrier => carrier.id === orderData.carrier
+    );
+    return item?.name || 'Unknown';
+  };
+
+  const getServiceName = () => {
+    if (!orderData.service_type) return 'Not specified';
+    const item = referenceData.carrierServices.find(
+      service => service.id === orderData.service_type
+    );
+    return item?.name || 'Unknown';
+  };
+
+  const getMaterialName = (id: number | string) => {
+    const item = materials.find(material => material.id === id);
+    return item?.name || 'Unknown';
+  };
 
   // Helper para renderizar la información de contacto
   const getContactInfo = () => {
     const contact = referenceData.contacts?.find(
-      (item: any) => item.id === orderData.contact
+      (item: Contact | any) => item.id === orderData.contact
     );
     if (!contact) return <Typography variant="body1">Unknown</Typography>;
 
@@ -95,9 +149,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   };
 
   // Helper para renderizar la dirección
-  const getAddressInfo = (addressId: any) => {
+  const getAddressInfo = (addressId: number | string) => {
     const address = referenceData.addresses?.find(
-      (item: any) => item.id === addressId
+      (item: Address | any) => item.id === addressId
     );
     if (!address) return 'Unknown';
 
@@ -128,7 +182,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   return (
     <>
-      <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+      <Paper variant="outlined" sx={{ p: 2, mb: 3, ...sx }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
           Order Summary
         </Typography>
