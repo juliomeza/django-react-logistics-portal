@@ -8,13 +8,17 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  SxProps,
+  Theme,
 } from '@mui/material';
+import { SelectedItem } from '../../../../types/materials';
 
 interface MaterialsTableProps {
-  materialItems: any[];
-  getMaterialName: (id: any) => string;
+  materialItems: SelectedItem[];
+  getMaterialName: (id: number | string) => string;
   displayValue: (value?: any) => React.ReactNode;
   isReviewMode: boolean;
+  sx?: SxProps<Theme>;
 }
 
 const MaterialsTable: React.FC<MaterialsTableProps> = ({
@@ -22,9 +26,10 @@ const MaterialsTable: React.FC<MaterialsTableProps> = ({
   getMaterialName,
   displayValue,
   isReviewMode,
+  sx,
 }) => {
   return (
-    <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+    <Paper variant="outlined" sx={{ p: 2, mb: 3, ...sx }}>
       <Typography variant="h6" sx={{ mb: 2 }}>
         Selected Materials
       </Typography>
@@ -44,9 +49,9 @@ const MaterialsTable: React.FC<MaterialsTableProps> = ({
               <TableRow key={item.id}>
                 <TableCell>{getMaterialName(item.material)}</TableCell>
                 <TableCell>{displayValue(item.lot)}</TableCell>
-                <TableCell>{displayValue(item.license_plate)}</TableCell>
+                <TableCell>{displayValue(item.license_plate || item.licensePlate)}</TableCell>
                 <TableCell align="right">
-                  {isReviewMode ? (item.orderQuantity || 1) : (item.quantity || 1)}
+                  {isReviewMode ? (item.orderQuantity || 1) : (item.availableQty || 1)}
                 </TableCell>
               </TableRow>
             ))}
