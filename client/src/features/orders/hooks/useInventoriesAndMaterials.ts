@@ -1,9 +1,10 @@
+// client/src/features/orders/hooks/useInventoriesAndMaterials.ts
+
 import { useState, useEffect } from 'react';
 import apiProtected from '../../../services/api/secureApi';
 import { AuthUserData } from '../../../types/auth';
-import { AxiosResponse } from 'axios';
 
-// Definimos interfaces específicas para este hook basadas en la respuesta real de la API
+// Define interfaces to match your original expected types
 interface ApiInventory {
   id: number;
   warehouse: number;
@@ -13,7 +14,6 @@ interface ApiInventory {
   license_plate: string;
   lot: string;
   vendor_lot: string;
-  // Propiedades opcionales específicas en lugar de [key: string]: any
   created_date?: string;
   modified_date?: string;
   date_received?: string;
@@ -33,20 +33,12 @@ interface ApiMaterial {
   uom: number;
   is_serialized: boolean;
   current_price?: number;
-  // Propiedades opcionales específicas en lugar de [key: string]: any
   created_date?: string;
   modified_date?: string;
   vendor?: number;
   category?: number;
   revision?: string;
   notes?: string;
-}
-
-// Definir posibles estructuras de respuesta API
-interface ApiResponseContainer<T> {
-  data: T;
-  success?: boolean;
-  message?: string;
 }
 
 interface UseInventoriesAndMaterialsReturn {
@@ -57,10 +49,10 @@ interface UseInventoriesAndMaterialsReturn {
 }
 
 /**
- * Hook para obtener inventarios y materiales filtrados por almacén
- * @param user Usuario autenticado
- * @param warehouse ID del almacén para filtrar inventarios
- * @returns Objetos de inventarios y materiales, estado de carga y posible error
+ * Hook to get inventories and materials filtered by warehouse
+ * @param user Authenticated user
+ * @param warehouse ID of the warehouse to filter inventories
+ * @returns Inventory and material objects, loading state and possible error
  */
 const useInventoriesAndMaterials = (
   user: AuthUserData | null, 
@@ -72,7 +64,7 @@ const useInventoriesAndMaterials = (
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Si no hay usuario o almacén, terminamos temprano
+    // If no user or warehouse, end early
     if (!user || !warehouse) {
       setLoading(false);
       return;
@@ -83,54 +75,76 @@ const useInventoriesAndMaterials = (
         setLoading(true);
         setError(null);
         
-        const invRes: AxiosResponse<ApiInventory[] | ApiResponseContainer<ApiInventory[]>> = 
-          await apiProtected.get('inventories/');
+        console.log('Fetching SQL inventory data for warehouse:', warehouse);
         
-        const matRes: AxiosResponse<ApiMaterial[] | ApiResponseContainer<ApiMaterial[]>> = 
-          await apiProtected.get('materials/');
+        // Use SQL Server endpoint
+        const sqlResponse = await apiProtected.get('reports/inventory/?order_type=outbound');
+        console.log('SQL Server response data:', sqlResponse.data);
         
-        // Convertir el warehouse a número de manera segura
-        const warehouseId = typeof warehouse === 'string' 
-          ? parseInt(warehouse, 10) 
-          : warehouse;
-        
-        // Filtrar solo si warehouseId es un número válido
-        if (!isNaN(warehouseId)) {
-          // Extraer los datos correctamente según la estructura de respuesta
-          let inventoryData: ApiInventory[];
-          let materialData: ApiMaterial[];
+        if (sqlResponse.data && sqlResponse.data.results && Array.isArray(sqlResponse.data.results)) {
+          // Create a unique ID for each material to maintain relationships
+          const materialMap = new Map<string, number>();
+          const materialsArray: ApiMaterial[] = [];
+          const inventoryItems: ApiInventory[] = [];
           
-          // Verificar si la respuesta tiene una estructura anidada o directa
-          if (invRes.data && typeof invRes.data === 'object' && 'data' in invRes.data) {
-            inventoryData = (invRes.data as ApiResponseContainer<ApiInventory[]>).data;
-          } else {
-            inventoryData = invRes.data as ApiInventory[];
-          }
+          // First pass: identify unique materials
+          sqlResponse.data.results.forEach((item: any) => {
+            const materialCode = item['Material Code'];
+            if (!materialMap.has(materialCode)) {
+              const materialId = materialsArray.length + 1; // Start IDs from 1
+              const material: ApiMaterial = {
+                id: materialId,
+                name: item['Material Name'],
+                lookup_code: materialCode,
+                description: item['Material Name'],
+                project: 1, // Default project ID
+                status: 1,  // Active status
+                type: 1,    // Default type
+                uom: 1,     // Default UOM
+                is_serialized: false
+              };
+              materialMap.set(materialCode, materialId);
+              materialsArray.push(material);
+            }
+          });
           
-          if (matRes.data && typeof matRes.data === 'object' && 'data' in matRes.data) {
-            materialData = (matRes.data as ApiResponseContainer<ApiMaterial[]>).data;
-          } else {
-            materialData = matRes.data as ApiMaterial[];
-          }
+          // Second pass: create inventory items linked to materials
+          sqlResponse.data.results.forEach((item: any, index: number) => {
+            const materialCode = item['Material Code'];
+            const materialId = materialMap.get(materialCode) || 0;
+            
+            const inventory: ApiInventory = {
+              id: index + 1,
+              material: materialId,
+              quantity: item['Available Quantity'],
+              location: item.warehouse || '',
+              license_plate: item['License Plate'],
+              lot: item.Lot || '',
+              vendor_lot: '',
+              warehouse: typeof warehouse === 'string' ? parseInt(warehouse, 10) : (warehouse || 0)
+            };
+            
+            // Add extra properties needed by the UI
+            (inventory as any).materialCode = item['Material Code'];
+            (inventory as any).materialName = item['Material Name'];
+            (inventory as any).availableQty = item['Available Quantity'];
+            
+            inventoryItems.push(inventory);
+          });
           
-          setInventories(
-            inventoryData.filter((inv: ApiInventory) => inv.warehouse === warehouseId)
-          );
-          setMaterials(materialData);
+          console.log('Processed materials:', materialsArray);
+          console.log('Processed inventories:', inventoryItems);
+          
+          setMaterials(materialsArray);
+          setInventories(inventoryItems);
         } else {
-          setError('Invalid warehouse ID');
+          console.error('Invalid response format:', sqlResponse.data);
+          setError('Invalid data format from SQL Server');
         }
       } catch (err) {
-        // Manejo de errores más específico
+        console.error('Error in useInventoriesAndMaterials:', err);
         if (err instanceof Error) {
           setError(err.message);
-        } else if (typeof err === 'object' && err !== null && 'response' in err) {
-          const apiError = err as { response?: { data?: { message?: string, detail?: string }, status?: number } };
-          setError(
-            apiError.response?.data?.message || 
-            apiError.response?.data?.detail || 
-            `Error de API: ${apiError.response?.status || 'desconocido'}`
-          );
         } else {
           setError('Failed to load inventories and materials');
         }
