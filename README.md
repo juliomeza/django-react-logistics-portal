@@ -69,7 +69,7 @@ To use this project as a starting point for your own application:
 
 1. Clone the repository:
 ```bash
-git clone git@github.com:juliomeza/django-react-logistics-orders.git your-project-name
+git clone git@github.com:juliomeza/django-react-logistics-portal.git your-project-name
 ```
 
 2. Move into your project directory:
