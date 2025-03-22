@@ -36,7 +36,12 @@ const OrderView: React.FC = () => {
         setOrder(orderResponse.data);
 
         const linesResponse = await apiProtected.get(`order-lines/order/${orderId}/`);
-        console.log('Order lines:', linesResponse.data);
+        const mappedLines = linesResponse.data.map((line: any) => ({
+          ...line,
+          orderQuantity: line.quantity // Add orderQuantity field
+        }));
+        setOrderLines(mappedLines);
+        console.log('Order lines:', mappedLines); // Log the mapped lines instead
         setOrderLines(linesResponse.data);
       } catch (err) {
         setError('Failed to load order details or lines.');

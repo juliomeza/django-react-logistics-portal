@@ -51,7 +51,7 @@ const MaterialsTable: React.FC<MaterialsTableProps> = ({
                 <TableCell>{displayValue(item.lot)}</TableCell>
                 <TableCell>{displayValue(item.license_plate || item.licensePlate)}</TableCell>
                 <TableCell align="right">
-                  {isReviewMode ? (item.orderQuantity || 1) : (item.availableQty || 1)}
+                  {isReviewMode ? (item.orderQuantity || 1) : ((item as any).quantity || 1)}
                 </TableCell>
               </TableRow>
             ))}
