@@ -24,21 +24,15 @@ const findPostgresqlMaterialId = (
   materials: any[]
 ): number | null => {
   if (!materialCode) {
-    console.warn('Material code is undefined, cannot find PostgreSQL material');
     return null;
   }
-  
-  console.log(`Finding PostgreSQL material ID for code: ${materialCode}`);
-  console.log('Available PostgreSQL materials:', materials);
   
   // Find the corresponding material in PostgreSQL database materials
   const material = materials.find(m => m.lookup_code === materialCode);
   
   if (material) {
-    console.log(`Found PostgreSQL material ID: ${material.id} for code: ${materialCode}`);
     return material.id;
   } else {
-    console.warn(`PostgreSQL material not found for code: ${materialCode}`);
     return null;
   }
 };
@@ -96,13 +90,10 @@ export const useMaterialSelection = ({
     materialCode: string,
     materialName: string
   ): Promise<number | null> => {
-    console.log(`Creating missing material in PostgreSQL: ${materialCode} - ${materialName}`);
-    
     try {
       // Get project ID from formData
       const projectId = formData.project;
       if (!projectId) {
-        console.error("Cannot create material: No project selected");
         return null;
       }
       
@@ -119,24 +110,18 @@ export const useMaterialSelection = ({
       };
       
       const response = await apiProtected.post('materials/', newMaterial);
-      console.log("Created new material in PostgreSQL:", response.data);
       
       // Return the new material ID
       return response.data.id;
     } catch (error) {
-      console.error("Failed to create material in PostgreSQL:", error);
       return null;
     }
   };
 
   // UseEffect to sync with formData
   useEffect(() => {
-    console.log("useMaterialSelection effect running with inventories:", inventories.length);
-    console.log("formData.selectedInventories:", formData.selectedInventories);
-    
     if (!selectedItems.length || selectedItems.length !== (formData.selectedInventories || []).length) {
       const enrichedItems = enrichSelectedItems(formData.selectedInventories, inventories, materials);
-      console.log("Enriched items:", enrichedItems);
       if (enrichedItems) {
         setSelectedItems(enrichedItems);
       }
@@ -145,8 +130,6 @@ export const useMaterialSelection = ({
 
   // Create inventory options from SQL Server data
   const inventoryOptions = useMemo(() => {
-    console.log("Creating inventory options from:", inventories.length, "items");
-    
     // If using SQL Server data directly, transform it to expected format
     const options = inventories.map(item => {
       return {
@@ -166,13 +149,11 @@ export const useMaterialSelection = ({
       };
     });
     
-    console.log("Created inventory options:", options);
     return options;
   }, [inventories]);
 
   // Filter by project
   const projectFilteredOptions = useMemo(() => {
-    console.log("Filtering by project:", formData.project);
     return inventoryOptions;
     // We don't actually need to filter by project since the SQL endpoint already does this
     // return formData.project 
@@ -182,8 +163,6 @@ export const useMaterialSelection = ({
 
   // Group by material
   const materialOptions = useMemo(() => {
-    console.log("Creating material groups from:", projectFilteredOptions.length, "items");
-    
     const materialMap = new Map<string | number, MaterialGroupItem>();
     
     projectFilteredOptions.forEach((option) => {
@@ -211,15 +190,12 @@ export const useMaterialSelection = ({
       !selectedItems.some((item) => String(item.materialCode) === String(material.materialCode))
     );
     
-    console.log("Material options:", result);
     return result;
   }, [projectFilteredOptions, selectedItems]);
 
   // Group by lot
   const lotOptions = useMemo(() => {
     if (!currentMaterialSelection) return [];
-    
-    console.log("Creating lot groups for material:", currentMaterialSelection.materialName);
     
     const lotMap = new Map<string, LotGroupItem>();
     
@@ -246,15 +222,12 @@ export const useMaterialSelection = ({
     });
     
     const result = Array.from(lotMap.values());
-    console.log("Lot options:", result);
     return result;
   }, [currentMaterialSelection]);
 
   // Filter by LP
   const lpOptions = useMemo(() => {
     if (!currentLotSelection) return [];
-    
-    console.log("Creating LP options for lot:", currentLotSelection.lot);
     
     const result = currentLotSelection.inventoryItems
       .filter((item) => String(item.lot) === currentLotSelection.lot)
@@ -265,7 +238,6 @@ export const useMaterialSelection = ({
         quantity: item.quantity || item.availableQty || 0
       }));
     
-    console.log("LP options:", result);
     return result;
   }, [currentLotSelection]);
 
@@ -292,14 +264,6 @@ export const useMaterialSelection = ({
   ): Promise<void> => {
     if (!material) return;
     
-    console.log("Adding item from SQL Server:", { 
-      materialCode: material.materialCode,
-      name: material.materialName,
-      lot: lot?.lot,
-      lp: lp?.licensePlate || lp?.license_plate,
-      quantity
-    });
-    
     // Find the corresponding material ID in PostgreSQL
     let postgreSqlMaterialId = findPostgresqlMaterialId(material.materialCode, materials);
     
@@ -311,8 +275,6 @@ export const useMaterialSelection = ({
       );
       
       if (postgreSqlMaterialId) {
-        console.log(`Successfully created missing material with ID: ${postgreSqlMaterialId}`);
-        
         // Add the new material to the materials array for future lookups
         materials.push({
           id: postgreSqlMaterialId,
@@ -326,14 +288,12 @@ export const useMaterialSelection = ({
           is_serialized: false
         });
       } else {
-        console.error("Failed to create missing material");
         alert(`Error: Could not add material "${material.materialName}" to your system database. Please contact support.`);
         return;
       }
     }
     
     if (!postgreSqlMaterialId) {
-      console.error("No PostgreSQL material ID available");
       alert(`Error: Material "${material.materialName}" cannot be added to order. Please contact support.`);
       return;
     }
@@ -356,8 +316,6 @@ export const useMaterialSelection = ({
       uom: material.uom || materials.find((m) => m.id === postgreSqlMaterialId)?.uom || DEFAULT_QUANTITY,
       project: material.project
     };
-    
-    console.log("Saving item with PostgreSQL material ID:", newItem);
     
     // Update local state
     const updatedItems = [...selectedItems, newItem];
