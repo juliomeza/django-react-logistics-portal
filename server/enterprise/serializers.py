@@ -17,6 +17,7 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProjectSerializer(serializers.ModelSerializer):
+    export_format = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     client = ClientSerializer(read_only=True)
     client_id = serializers.PrimaryKeyRelatedField(
         queryset=Client.objects.all(), source='client', write_only=True

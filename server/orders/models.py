@@ -140,7 +140,7 @@ class OrderLine(TimeStampedModel):
     order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='lines')
     material = models.ForeignKey(Material, on_delete=models.PROTECT, related_name='order_lines')
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    lot = models.CharField(max_length=50, blank=True)
+    lot = models.CharField(max_length=50, blank=True, null=True)
     vendor_lot = models.CharField(max_length=50, blank=True)
     license_plate = models.CharField(
         max_length=50,

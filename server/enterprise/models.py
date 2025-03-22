@@ -66,11 +66,14 @@ class Project(TimeStampedModel):
     carriers = models.ManyToManyField('logistics.Carrier', related_name="projects", blank=True)
     services = models.ManyToManyField('logistics.CarrierService', related_name="projects", blank=True)
     contacts = models.ManyToManyField('logistics.Contact', related_name="projects", blank=True)
+    # Ensure null=True and blank=True are present
     export_format = models.CharField(
         max_length=4,
         choices=EXPORT_FORMAT_CHOICES,
         default='JSON',
-        help_text="Export format for orders"
+        help_text="Export format for orders",
+        null=True,
+        blank=True
     )
     notes = models.TextField(blank=True)
 
