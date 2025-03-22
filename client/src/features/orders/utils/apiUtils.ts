@@ -10,7 +10,8 @@ export interface OrderLinePayload {
   order: number | string;
   material: number;
   quantity: number;
-  license_plate: number;
+  license_plate: string | null; // Permitir nulo si no hay placa
+  lot: string | null; // Agregar el campo para el lote
 }
 
 /**
@@ -64,7 +65,8 @@ export const saveOrderLines = async (
         order: orderId,
         material: typeof item.material === 'string' ? parseInt(item.material, 10) : item.material,
         quantity: item.orderQuantity || 1,
-        license_plate: typeof item.id === 'string' ? parseInt(item.id, 10) : item.id,
+        license_plate: item.licensePlate || item.license_plate || null, // Incluir el license plate, usar null si no hay
+        lot: item.lot || null, // Incluir el lote, usar null si no hay lote
       };
       return apiProtected.post<ApiResponse<unknown>>('order-lines/', orderLineData);
     });

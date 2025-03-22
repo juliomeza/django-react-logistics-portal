@@ -159,6 +159,9 @@ export interface OrderFormData {
     id: number;
     material: number;
     orderQuantity?: number;
+    licensePlate?: string | null; // Add licensePlate
+    license_plate?: string | null; // Add license_plate
+    lot?: string | null; // Add lot
   }>;
 }
 

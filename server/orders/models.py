@@ -140,11 +140,12 @@ class OrderLine(TimeStampedModel):
     order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='lines')
     material = models.ForeignKey(Material, on_delete=models.PROTECT, related_name='order_lines')
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    license_plate = models.ForeignKey(
-        Inventory,
-        on_delete=models.PROTECT,
-        related_name='order_lines',
-        null=True, blank=True
+    lot = models.CharField(max_length=50, blank=True)
+    vendor_lot = models.CharField(max_length=50, blank=True)
+    license_plate = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True
     )
     serial_number = models.ForeignKey(
         InventorySerialNumber,
@@ -152,8 +153,6 @@ class OrderLine(TimeStampedModel):
         related_name='order_lines',
         null=True, blank=True
     )
-    lot = models.CharField(max_length=50, blank=True)
-    vendor_lot = models.CharField(max_length=50, blank=True)
     notes = models.TextField(blank=True)
 
     def __str__(self):

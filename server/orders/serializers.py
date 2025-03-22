@@ -24,7 +24,7 @@ class OrderSerializer(serializers.ModelSerializer):
         read_only_fields = ['lookup_code_order', 'lookup_code_shipment']
 
 class OrderLineSerializer(serializers.ModelSerializer):
-    license_plate = serializers.CharField(source='license_plate.license_plate', read_only=True, allow_null=True)
+    lot = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     class Meta:
         model = OrderLine
         fields = '__all__'
