@@ -1,11 +1,9 @@
 // client/src/features/orders/hooks/useMaterialSelection.ts
 
 import { useState, useEffect, useMemo } from 'react';
+import apiProtected from '../../../services/api/secureApi';
 import { 
-  enrichSelectedItems, 
-  createInventoryOptions, 
-  EnrichedInventoryOption,
-  Material as UtilMaterial 
+  enrichSelectedItems
 } from '../utils/MaterialUtils';
 import { 
   getDisplayValues, 
@@ -16,6 +14,36 @@ import {
   LicensePlate as SelectionLP,
   DEFAULT_QUANTITY
 } from '../utils/materialSelectionUtils';
+
+// Function to find PostgreSQL material ID from material code
+const findPostgresqlMaterialId = (
+  materialCode: string | undefined,
+  materials: any[]
+): number | null => {
+  if (!materialCode) {
+    console.warn('Material code is undefined, cannot find PostgreSQL material');
+    return null;
+  }
+  
+  console.log(`Finding PostgreSQL material ID for code: ${materialCode}`);
+  
+  // Normalizar el código para la búsqueda
+  const normalizedCode = materialCode.trim();
+  
+  // Find the corresponding material in PostgreSQL database materials
+  const material = materials.find(m => {
+    const lookupCode = m.lookup_code || '';
+    return lookupCode.trim() === normalizedCode;
+  });
+  
+  if (material) {
+    console.log(`Found PostgreSQL material ID: ${material.id} for code: ${materialCode}`);
+    return material.id;
+  } else {
+    console.warn(`PostgreSQL material not found for code: ${materialCode}`);
+    return null;
+  }
+};
 
 // Interfaces for data
 interface FormData {
@@ -30,6 +58,7 @@ interface UseMaterialSelectionProps {
   setFormData: (data: FormData | any[]) => void;
   inventories?: any[];
   materials?: any[];
+  refreshMaterials?: () => Promise<void>; // Nueva prop para actualizar materiales
 }
 
 // Extended interface for use in the hook
@@ -57,6 +86,7 @@ export const useMaterialSelection = ({
   setFormData,
   inventories = [],
   materials = [],
+  refreshMaterials // Nuevo parámetro
 }: UseMaterialSelectionProps) => {
   // Initialize selectedItems directly from formData for consistency
   const [selectedItems, setSelectedItems] = useState<any[]>(formData.selectedInventories || []);
@@ -64,6 +94,94 @@ export const useMaterialSelection = ({
   const [currentLotSelection, setCurrentLotSelection] = useState<LotGroupItem | null>(null);
   const [currentLPSelection, setCurrentLPSelection] = useState<SelectionLP | null>(null);
   const [materialInputValue, setMaterialInputValue] = useState<string>('');
+  const [localMaterials, setLocalMaterials] = useState<any[]>(materials);
+  const [isCreatingMaterial, setIsCreatingMaterial] = useState<boolean>(false);
+
+  // Actualizar materiales locales cuando cambien los materiales externos
+  useEffect(() => {
+    if (materials && materials.length > 0) {
+      setLocalMaterials(materials);
+    }
+  }, [materials]);
+
+  // Function to create missing material in PostgreSQL
+  const createMissingMaterial = async (
+    materialCode: string,
+    materialName: string
+  ): Promise<number | null> => {
+    console.log(`Creating missing material in PostgreSQL: ${materialCode} - ${materialName}`);
+    setIsCreatingMaterial(true);
+    
+    try {
+      // Get project ID from formData
+      const projectId = formData.project;
+      if (!projectId) {
+        console.error("Cannot create material: No project selected");
+        return null;
+      }
+      
+      // Check if material already exists first (to avoid duplicates)
+      console.log(`Checking if material ${materialCode} already exists in PostgreSQL`);
+      const existingQuery = await apiProtected.get(`materials/?lookup_code=${encodeURIComponent(materialCode)}`);
+      console.log('Existing materials query response:', existingQuery.data);
+      
+      // Check if we got any results
+      if (existingQuery.data && 
+          (Array.isArray(existingQuery.data) ? existingQuery.data.length > 0 : 
+          (existingQuery.data.results && existingQuery.data.results.length > 0))) {
+        
+        const existingMaterial = Array.isArray(existingQuery.data) ? 
+          existingQuery.data[0] : existingQuery.data.results[0];
+        
+        console.log(`Material ${materialCode} already exists in PostgreSQL with ID: ${existingMaterial.id}`);
+        return existingMaterial.id;
+      }
+      
+      // Create new material in PostgreSQL
+      const newMaterial = {
+        name: materialName || materialCode,
+        lookup_code: materialCode,
+        description: materialName || materialCode,
+        project: projectId,
+        status: 1, // Active status
+        type: 1,   // Default type
+        uom: 1,    // Default UOM
+        is_serialized: false
+      };
+      
+      console.log("Creating new material in PostgreSQL with data:", newMaterial);
+      const response = await apiProtected.post('materials/', newMaterial);
+      console.log("Created new material in PostgreSQL, response:", response.data);
+      
+      // Return the new material ID
+      return response.data.id;
+    } catch (error) {
+      console.error("Failed to create material in PostgreSQL:", error);
+      
+      // Log more detalles if available
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { 
+          response?: { 
+            status?: number, 
+            statusText?: string, 
+            data?: any 
+          } 
+        };
+        
+        if (axiosError.response) {
+          console.error("API error details:", {
+            status: axiosError.response.status,
+            statusText: axiosError.response.statusText,
+            data: axiosError.response.data
+          });
+        }
+      }
+      
+      return null;
+    } finally {
+      setIsCreatingMaterial(false);
+    }
+  };
 
   // UseEffect to sync with formData
   useEffect(() => {
@@ -71,13 +189,13 @@ export const useMaterialSelection = ({
     console.log("formData.selectedInventories:", formData.selectedInventories);
     
     if (!selectedItems.length || selectedItems.length !== (formData.selectedInventories || []).length) {
-      const enrichedItems = enrichSelectedItems(formData.selectedInventories, inventories, materials);
+      const enrichedItems = enrichSelectedItems(formData.selectedInventories, inventories, localMaterials);
       console.log("Enriched items:", enrichedItems);
       if (enrichedItems) {
         setSelectedItems(enrichedItems);
       }
     }
-  }, [formData.selectedInventories, inventories, materials, selectedItems.length]);
+  }, [formData.selectedInventories, inventories, localMaterials, selectedItems.length]);
 
   // Create inventory options from SQL Server data
   const inventoryOptions = useMemo(() => {
@@ -102,7 +220,7 @@ export const useMaterialSelection = ({
       };
     });
     
-    console.log("Created inventory options:", options);
+    console.log("Created inventory options:", options.length);
     return options;
   }, [inventories]);
 
@@ -123,7 +241,7 @@ export const useMaterialSelection = ({
     const materialMap = new Map<string | number, MaterialGroupItem>();
     
     projectFilteredOptions.forEach((option) => {
-      const materialKey = option.material;
+      const materialKey = option.materialCode || option.material;
       
       if (!materialMap.has(materialKey)) {
         materialMap.set(materialKey, {
@@ -144,10 +262,10 @@ export const useMaterialSelection = ({
     });
     
     const result = Array.from(materialMap.values()).filter((material) =>
-      !selectedItems.some((item) => String(item.material) === String(material.material))
+      !selectedItems.some((item) => String(item.materialCode) === String(material.materialCode))
     );
     
-    console.log("Material options:", result);
+    console.log(`Generated ${result.length} material options after filtering out selected items`);
     return result;
   }, [projectFilteredOptions, selectedItems]);
 
@@ -164,7 +282,7 @@ export const useMaterialSelection = ({
       
       if (!lotMap.has(lotKey)) {
         lotMap.set(lotKey, {
-          id: `lot-${currentMaterialSelection.material}-${lotKey}`,
+          id: `lot-${currentMaterialSelection.materialCode}-${lotKey}`,
           lot: lotKey,
           material: item.material,
           materialCode: item.materialCode || '',
@@ -182,7 +300,7 @@ export const useMaterialSelection = ({
     });
     
     const result = Array.from(lotMap.values());
-    console.log("Lot options:", result);
+    console.log(`Generated ${result.length} lot options for material: ${currentMaterialSelection.materialName}`);
     return result;
   }, [currentMaterialSelection]);
 
@@ -196,12 +314,12 @@ export const useMaterialSelection = ({
       .filter((item) => String(item.lot) === currentLotSelection.lot)
       .map((item) => ({
         ...item,
-        id: item.id || `lp-${item.material}-${item.lot}-${item.license_plate || item.licensePlate}`,
+        id: item.id || `lp-${item.materialCode}-${item.lot}-${item.license_plate || item.licensePlate}`,
         licensePlate: item.license_plate || item.licensePlate,
         quantity: item.quantity || item.availableQty || 0
       }));
     
-    console.log("LP options:", result);
+    console.log(`Generated ${result.length} license plate options for lot: ${currentLotSelection.lot}`);
     return result;
   }, [currentLotSelection]);
 
@@ -218,60 +336,134 @@ export const useMaterialSelection = ({
     }, 0);
   };
 
-  // Rest of the hook remains the same...
-  const handleAddItem = (
+  // Modified handleAddItem to find the corresponding PostgreSQL material ID
+  // and create it if it doesn't exist
+  const handleAddItem = async (
     material: MaterialGroupItem, 
     lot: LotGroupItem | null, 
     lp: SelectionLP | null, 
     quantity: number = DEFAULT_QUANTITY
-  ): void => {
-    if (!material) return;
-    
-    console.log("Adding item:", { material, lot, lp, quantity });
-    
-    const displayValues = getDisplayValues(material, lot, lp);
-    const displayedAvailableQty = getAvailableQuantity(material, lot, lp);
-    const validatedOrderQty = validateOrderQuantity(quantity, displayedAvailableQty);
-    
-    // Build the new item
-    const newItem = {
-      id: lp ? lp.id : (lot ? lot.id : material.id),
-      material: material.material,
-      materialCode: displayValues.code,
-      materialName: displayValues.name,
-      lot: displayValues.lot,
-      license_plate: displayValues.licensePlate,
-      licensePlate: displayValues.licensePlate,
-      availableQty: displayedAvailableQty,
-      orderQuantity: validatedOrderQty,
-      uom: material.uom || materials.find((m) => m.id === material.material)?.uom || DEFAULT_QUANTITY,
-      project: material.project
-    };
-    
-    console.log("New item to add:", newItem);
-    
-    // Update local state
-    const updatedItems = [...selectedItems, newItem];
-    setSelectedItems(updatedItems);
-    
-    // Update formData
-    const isDirectUpdate = typeof setFormData === 'function' && 
-                          (!formData.hasOwnProperty('selectedInventories') || 
-                           Array.isArray(formData.selectedInventories));
-
-    if (isDirectUpdate) {
-      setFormData(updatedItems);
-    } else {
-      setFormData({
-        ...formData,
-        selectedInventories: updatedItems
-      });
+  ): Promise<void> => {
+    if (!material) {
+      console.error("Cannot add item: No material selected");
+      return;
     }
     
-    // Reset selections after adding
-    setTimeout(() => {
-      resetSelections();
-    }, 50);
+    console.log("Adding item from SQL Server:", { 
+      materialCode: material.materialCode,
+      name: material.materialName,
+      lot: lot?.lot,
+      lp: lp?.licensePlate || lp?.license_plate,
+      quantity
+    });
+    
+    try {
+      // Find the corresponding material ID in PostgreSQL
+      let postgreSqlMaterialId = findPostgresqlMaterialId(material.materialCode, localMaterials);
+      
+      // Si los materiales pueden estar desactualizados, intentar recargarlos primero
+      if (!postgreSqlMaterialId && refreshMaterials) {
+        console.log("Material not found in local cache, refreshing materials first");
+        await refreshMaterials();
+        // Comprobar nuevamente después de actualizar
+        postgreSqlMaterialId = findPostgresqlMaterialId(material.materialCode, localMaterials);
+      }
+      
+      // If material doesn't exist in PostgreSQL, create it
+      if (!postgreSqlMaterialId && material.materialCode) {
+        console.log("Material not found in PostgreSQL, will create it");
+        
+        postgreSqlMaterialId = await createMissingMaterial(
+          material.materialCode,
+          material.materialName || material.materialCode
+        );
+        
+        if (postgreSqlMaterialId) {
+          console.log(`Successfully created missing material with ID: ${postgreSqlMaterialId}`);
+          
+          // Add the new material to the materials array for future lookups
+          const newMaterial = {
+            id: postgreSqlMaterialId,
+            name: material.materialName || material.materialCode,
+            lookup_code: material.materialCode,
+            description: material.materialName || material.materialCode,
+            project: formData.project,
+            status: 1,
+            type: 1,
+            uom: 1,
+            is_serialized: false
+          };
+          
+          // Actualizar nuestro array local de materiales
+          setLocalMaterials(prevMaterials => [...prevMaterials, newMaterial]);
+          
+          // Asegurarnos que la caché global también se actualiza
+          if (refreshMaterials) {
+            console.log("Refreshing global materials cache after creating new material");
+            await refreshMaterials();
+          }
+        } else {
+          console.error("Failed to create missing material");
+          alert(`Error: No se pudo agregar el material "${material.materialName}" a su sistema. Por favor contacte con soporte.`);
+          return;
+        }
+      }
+      
+      if (!postgreSqlMaterialId) {
+        console.error("No PostgreSQL material ID available, cannot proceed");
+        alert(`Error: El material "${material.materialName}" no puede ser agregado a la orden. Contacte con soporte técnico.`);
+        return;
+      }
+      
+      console.log(`Using PostgreSQL material ID: ${postgreSqlMaterialId} for material: ${material.materialName}`);
+      
+      const displayValues = getDisplayValues(material, lot, lp);
+      const displayedAvailableQty = getAvailableQuantity(material, lot, lp);
+      const validatedOrderQty = validateOrderQuantity(quantity, displayedAvailableQty);
+      
+      // Create new item with the PostgreSQL material ID
+      const newItem = {
+        id: lp ? lp.id : (lot ? lot.id : material.id),
+        material: postgreSqlMaterialId, // Use PostgreSQL material ID
+        materialCode: displayValues.code,
+        materialName: displayValues.name,
+        lot: displayValues.lot,
+        license_plate: displayValues.licensePlate,
+        licensePlate: displayValues.licensePlate,
+        availableQty: displayedAvailableQty,
+        orderQuantity: validatedOrderQty,
+        uom: material.uom || localMaterials.find((m) => m.id === postgreSqlMaterialId)?.uom || 1,
+        project: material.project || formData.project
+      };
+      
+      console.log("Saving item with PostgreSQL material ID:", newItem);
+      
+      // Update local state
+      const updatedItems = [...selectedItems, newItem];
+      setSelectedItems(updatedItems);
+      
+      // Update formData
+      const isDirectUpdate = typeof setFormData === 'function' && 
+                            (!formData.hasOwnProperty('selectedInventories') || 
+                             Array.isArray(formData.selectedInventories));
+
+      if (isDirectUpdate) {
+        setFormData(updatedItems);
+      } else {
+        setFormData({
+          ...formData,
+          selectedInventories: updatedItems
+        });
+      }
+      
+      // Reset selections after adding
+      setTimeout(() => {
+        resetSelections();
+      }, 50);
+    } catch (error) {
+      console.error("Error adding item:", error);
+      alert("Ocurrió un error al agregar el artículo a la orden. Por favor, inténtelo de nuevo.");
+    }
   };
   
   const handleQuantityChange = (itemId: string | number, newQuantity: number): void => {
@@ -356,6 +548,7 @@ export const useMaterialSelection = ({
     currentLPSelection,
     materialInputValue,
     isProjectSelected,
+    isCreatingMaterial, // Nueva propiedad para mostrar estado de creación
     setCurrentMaterialSelection,
     setCurrentLotSelection,
     setCurrentLPSelection,
